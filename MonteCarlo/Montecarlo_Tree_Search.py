@@ -11,10 +11,6 @@ class MontecarloTreeSearch():
         self.expandPoint = expandPoint
         self.searchRepeatNum = searchRepeatNum
         self.evaluationQueue = []
-        # print("mcts")
-        # self.valueNetwork = VN()
-        # self.rollout = RO()
-
 
     def set_state(self,Board):
         self.tree.reset_board(Board)
