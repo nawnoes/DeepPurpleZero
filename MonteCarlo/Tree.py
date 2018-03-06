@@ -1,7 +1,7 @@
-import NewMonteCarloTreeSearch.Node as Node
-import NewMonteCarloTreeSearch.Board_Stack as BS
-from NewMonteCarloTreeSearch.NeuralNetwork import PolicyNetwork as PN
-from NewMonteCarloTreeSearch.OneHotEncoding import OneHotEncode as OHE
+import MonteCarlo.Node as Node
+import Support.Board_Stack as BS
+from NeuralNetwork.ResNet import DeepPurpleNetwork as DPN
+from Support.OneHotEncoding import OneHotEncode as OHE
 import chess
 
 class Tree:
@@ -10,7 +10,7 @@ class Tree:
         self.root_Node = None
         self.currentNode = None#현재 가리키는 노드를 임시로 저장
         self.board_stack = None #MCTS에서 각노드의 명령어를 사용할 Board_Stack
-        self.policyNetwork = PN()
+        self.deepPurpleNetwork = DPN()
         self.ohe = OHE()
         self.thresholdOfPolicyNetwork = 0.01
 
@@ -62,13 +62,14 @@ class Tree:
         self.currentNode.add_ChildNode(expandedChild)
         self.tree.set_CurrentNode(expandedChild)
     # policy
-    def makeNextChildByPolicyNetwork(self):
+    def makeNextChild(self):
 
         if not self.currentNode.is_array4096():
             tmpBoard = self.board_stack.get_ChessBoard()
-            array4096, argmaxOfSoftmax = self.policyNetwork.getArraysOfPolicyNetwork(tmpBoard)
+            array4096, argmaxOfSoftmax, value = self.deepPurpleNetwork.getPolicyAndValue(tmpBoard)
             self.currentNode.set_array4096(array4096)
             self.currentNode.set_argmaxOfSoftmax(argmaxOfSoftmax)
+            self.currentNode.set_valueScore(value)
 
         madeNode = self.get_BestQuNode()
         # q+u 값을 최대화하는 노드 선택
@@ -95,7 +96,7 @@ class Tree:
         if newNode == None:
             if self.currentNode.get_LengthOfChild() == 0:
                 #자식이 하나도 없는 경우 무조건 Node를 찾아서 반환
-                newNode = self.get_NextLegalCommandNode(True)
+                newNode = self.get_NextLegalCommandNode(bruteForce=True)
                 maxQuNode = newNode
             else:
                 maxQuNode = childList[0]
@@ -119,10 +120,6 @@ class Tree:
         color = not self.currentNode.get_Color()
         numOfLegalMoves =len(self.board_stack.get_ChessBoard().legal_moves)
         numOfChild = self.currentNode.get_LengthOfChild()
-
-        # print(self.board_stack.get_ChessBoard().legal_moves)
-        # print("자식 갯수",numOfChild)
-
         nextChildIndex = self.currentNode.get_NextChildIndex()
 
         # 언제 정지시켜야하는지 조건을 확인해야 한다.

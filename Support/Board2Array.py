@@ -101,8 +101,7 @@ class Board2Array:
         boardArray.append(self.check(chessBoard,chessStr)) #chess.BLACK
         boardArray.append(self.castling(chessBoard,chess.WHITE))
         boardArray.append(self.castling(chessBoard, chess.BLACK))
-        boardArray.append(self.turn(chessBoard, chess.WHITE))
-        boardArray.append(self.turn(chessBoard, chess.BLACK))
+        boardArray.append(self.turn(chessBoard))
 
         boardArray = np.array(boardArray)
         boardArray =boardArray.transpose(1,2,0) # 행렬을 입력에 맞게 변환
@@ -232,13 +231,15 @@ class Board2Array:
                 break
 
         return feature
-    def turn(self,chessBoard, chessTurn):
+    def turn(self,chessBoard):
         #턴이 일치하면 전체가 1, 일치하지 않으면 0 반환
         feature = [[0] * 8 for i in range(8)]
         for i in range(8):
             for j in range(8):
-                if chessTurn == chessBoard.turn:
+                if chessBoard.turn==True: #백이면 1
                     feature[i][j] = 1
+                else: #흑이면 0
+                    feature[i][j] = 0
         return feature
     def castling(self,chessBoard, chessTurn):
         #주어진 턴에서 캐슬링 경우가 있는지

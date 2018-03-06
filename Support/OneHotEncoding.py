@@ -102,7 +102,6 @@ class OneHotEncode:
                 startPosition.append(j + i)
         return startPosition
 
-
     def onehotToMove4096(self, onehot):
         #Onehot을 Move로 바꿔주는 함수
         #onehot = [0,0,0,...,1,0,...] -> 'h7'으로 바꿔줌

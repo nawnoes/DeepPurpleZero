@@ -9,18 +9,16 @@ class Node:
         self.command = command  # 명령어
         self.color = color # 현재 노드의 색깔 True면 흰색, False 검은색
         self.visit = 0  # 방문횟수
-        self.policy_Score = policy_Score # 정책망
-        self.N_rollout = 0
-        self.W_rollout = 0
-        self.N_value = 0
-        self.W_value = 0
-        self.child = []  # 자식 노드
+        self.policyScore = policy_Score # 정책망
+        self.valueScore = None
+        self.sumValueScore = 0
+        self.sumGameResult = 0
         self.parent = parent  # 부모노드
         self.array4096 =None
         self.argmaxOfSoftmax = None
         self.bear_Flag = False
         self.lamda = 0.5
-        self.n_vl = 0#3 나중에 멀티 프로세싱으로 여러개의 스레드가 트리를 생성할 떼 사용
+        self.n_vl = 0#3 나중에 멀티 프로세싱으로 여러개의 스레드가 트리를 생성할 때 사용
         self.nextChildIndex=0
 
     def __del__(self):
@@ -34,6 +32,8 @@ class Node:
         self.array4096 = array4096
     def set_argmaxOfSoftmax(self,argmaxOfSotfmax):
         self.argmaxOfSoftmax = argmaxOfSotfmax
+    def set_valueScore(self,value):
+        self.valueScore = value
     def is_child(self,anyNode):
         for child in self.child:
             if anyNode == child:
@@ -44,10 +44,8 @@ class Node:
             return False
         else:
             return True
-    def get_W_rollout(self):
-        return self.W_rollout
-    def get_W_value(self):
-        return self.W_value
+    def get_valueScore(self):
+        return self.valueScore
     def get_array4096(self):
         return self.array4096
     def get_argmaxOfSoftmax(self):
@@ -66,29 +64,20 @@ class Node:
         return self.color
     def get_Flag(self):
         return self.bear_Flag
-    def get_N_rollout(self):
-        return self.N_rollout
-    def get_N_value(self):
-        return self.N_value
     def get_NextChildIndex(self):
         return self.nextChildIndex
-
     def on_Flag(self):
         self.bear_Flag = True
     def off_Flag(self):
         self.bear_Flag = False
-
     def add_Visit(self,visit):
         self.visit += visit
-
     def plus_1_NextChildIndex(self):
         self.nextChildIndex += 1
-
     def add_ChildNode(self, node):
         if self.bear_Flag == False:
             self.on_Flag()
         self.child.append(node)
-
     def get_Qu(self):
         #win/games + C_puct * policy_Score * ( root( sigma(other child visit) / ( 1 + my visit ) )
         if self.parent ==None:
@@ -97,43 +86,28 @@ class Node:
             score =  self.calc_Q() + self.calc_u()
         return score
     def calc_Q(self):
+        #Q(s,a) = sum(V(s')) / N(s,a)
         if self.color == False: #흑일때 -부호 붙여서 계산
-            W_r= -self.W_rollout
-            N_r= self.N_rollout
-            W_v= -self.W_value
-            N_v= self.N_value
+            value = -self.valueScore
         else:
-            W_r= self.W_rollout
-            N_r= self.N_rollout
-            W_v= self.W_value
-            N_v= self.N_value
-        N_r +=1
-        N_v +=1
-        q = (1-self.lamda)*(W_r/N_r) + self.lamda*(W_v/N_v)
+            value = self.valueScore
+        q = value / self.visit
         return q
     def calc_u(self):
-        #
-        # if self.N_rollout ==0:
-        #     u =0
-        # else:
         # u = Cpuct * self.policy_Score * (math.sqrt(self.sum_other_Visit())/(self.N_rollout+1))
         # u = Cpuct * self.policy_Score * (math.sqrt(self.sum_Siblings_Visit()+1) / (self.N_rollout + 1))
         u= Cpuct * self.policy_Score * (math.sqrt(self.sum_Siblings_Visit()) / (self.N_rollout + 1))
         # u = Cpuct * self.policy_Score * (math.sqrt(self.sum_other_Visit()+1) / (self.N_rollout + 1))
-
         return u
-
     def sum_other_Visit(self):
         sumAll = self.parent.sum_childVisit()
         return sumAll - self.visit
-
     def sum_childVisit(self):
         lenth = len(self.child)
         sum = 0
         for i in range(lenth):
             sum += self.child[i].visit
         return sum
-
     def sum_Siblings_Visit(self):
         # lenth = len(self.child)
         # sum = 0
@@ -146,17 +120,9 @@ class Node:
             self.W_rollout += self.n_vl
         else:
             self.W_rollout -= self.n_vl
-    def renewForBackpropagation(self,rolloutResult, valueNetworkResult):
-        #rollout의 값 업데이트
-        self.N_rollout = self.N_rollout - self.n_vl + 1
-
-        if self.color == False: #흑의 경우
-            self.W_rollout = self.W_rollout - self.n_vl +rolloutResult
-        else:
-            self.W_rollout = self.W_rollout + self.n_vl +rolloutResult
-         #가치망의 값 업데이트
-        self.W_value += valueNetworkResult
-        self.N_value += 1
+    def renewForBackpropagation(self,gameResult, valueNetworkResult):
+        self.sumValueScore += valueNetworkResult
+        self.sumGameResult += gameResult
     def get_bestChild(self):
         #child에서 가장 selectingScore가 최대인 후보를 선택
         lenth = len(self.child)
@@ -215,7 +181,6 @@ class Node:
                 #print(max)
                 index = i
         return index
-
     def is_root(self):
         if self.parent:
             return False
@@ -235,7 +200,6 @@ class Node:
             print("u : ",self.child[i].calc_u())
             print("N_rollout: ",self.child[i].get_N_rollout()," N_value: ",self.child[i].get_N_value())
             print("move : ", self.child[i].get_Command())
-
     def trans_result(self, result):
         rm = {'1-0': 1, '0-1': -1, '1/2-1/2': 0}  # 게임의 끝, ( 백승 = 1, 흑승 = -1, 무승부, 0 )
         return rm[result]
