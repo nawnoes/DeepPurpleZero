@@ -192,6 +192,7 @@ class Board2Array:
         k = 0 #이때 k는 chess.SQUARES 순서
         for i in range(8):
             for j in range(8):
+                # print(chessBoard)
                 if chessBoard.is_pinned(chessTurn,k):
                     #현재 주어진 color(턴)에 square가 pin 상태라면
                     feature[7-i][j] = 1

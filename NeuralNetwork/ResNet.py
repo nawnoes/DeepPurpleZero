@@ -4,9 +4,9 @@ import tensorflow as tf
 import os
 import copy
 import Support.Board2Array as B2A
-import Support.OneHotEncoding as OHE
+from Support.OneHotEncoding import OneHotEncode as OHE
 
-learning_rate= 0.0001
+learning_rate= 0.1
 beta = 0.01
 
 class DeepPurpleNetwork:
@@ -116,10 +116,13 @@ class DeepPurpleNetwork:
         regularizer = W1_Regulization+W2_Regulization+W3_Regulization+W4_Regulization+W5_Regulization+W6_Regulization+\
                       W7_Regulization +W8_Regulization+W9_Regulization+P_W_Regulization+P_Flat_W_Regulization+\
                       V_W_Regulization+V_Flat_W_Regulization
-        cost = tf.add(tf.sqrt(self.Z - self.V_hypothesis),tf.nn.softmax_cross_entropy_with_logits(logits=self.P_hypothesis, labels=self.Y))
-        cost = tf.reduce_mean(cost+beta * regularizer)
+        self.logit= tf.nn.softmax_cross_entropy_with_logits(logits=self.P_hypothesis, labels=self.Y)
+        self.valueError = tf.square(self.Z - self.V_hypothesis)
+        self.cost = tf.add(self.valueError,self.logit)
+        self.cost = tf.reduce_mean(self.cost+beta * regularizer)
 
-        self.optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
+        self.optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(self.cost)
+        # self.optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(self.cost)
         pn_correct_prediction = tf.equal(tf.argmax(self.P_hypothesis, 1), tf.argmax(self.Y, 1))
         vn_correct_prediction = (2 - tf.abs(self.Y - self.V_hypothesis)) / 2
 
@@ -155,7 +158,10 @@ class DeepPurpleNetwork:
                 return tf.nn.batch_normalization(bnInput,batchMean,batchVar,beta,gamma,epsilon)
         else:
             return tf.nn.batch_normalization(bnInput, populationMean, populationVar, beta, gamma, epsilon)
-
+    def learning(self, input, policylabel, valuelabel):
+        input = self.getInput(input)
+        l, ve, c, o =self.sess.run([self.logit, self.valueError, self.cost, self.optimizer], feed_dict={self.X: input, self.Y: policylabel, self.Z: valuelabel})
+        return l,ve,c
     def restore(self):
         self.ckpt = tf.train.get_checkpoint_state(os.path.dirname(self.checkpointPath))
         self.global_step = int(self.ckpt.model_checkpoint_path.rsplit('-', 1)[1])
@@ -174,8 +180,10 @@ class DeepPurpleNetwork:
         return input
     def getPolicy(self,input):
         softmaxOfPolicy = tf.nn.softmax(self.P_hypothesis)
+        input = self.getInput(input)
         return self.sess.run(softmaxOfPolicy, feed_dict={self.X: input})
     def getValue(self,input):
+        input = self.getInput(input)
         return self.sess.run(self.V_hypothesis, feed_dict={self.X: input})
     def getPolicyAndValue(self,chessBoard):
         input = self.getInput(chessBoard)
@@ -201,8 +209,7 @@ class DeepPurpleNetwork:
     def getMove(self,chessBoard):
         #chessBoard가 ChessBoard()인지 chess.ChessBoard()인지에 따라 legalMoves 호출 방법이 변경
         #추후 변경 필요
-        input = self.getInput(chessBoard)
-        softMax = self.getPolicy(input)
+        softMax = self.getPolicy(chessBoard)
         softMax = np.array(softMax[0])
         ArgMaxOfSoftmax = (-softMax).argsort()
         # 내림차순으로 분류한 것을 리스트로 반환 받는다
@@ -210,7 +217,7 @@ class DeepPurpleNetwork:
         ohe = OHE()
         i = 0
         child = 0
-        numOfLegalMoves = len(chessBoard.getLegalMoves())
+        numOfLegalMoves = len(chessBoard.legal_moves)
         numOfChild = 1
 
         # 만드려고 하는 자식 개수보다 가능한 move 갯수가 적을때
@@ -226,7 +233,7 @@ class DeepPurpleNetwork:
                 tmpMove = chess.Move.from_uci(tmpMove)  # 주석처리: 선피쉬랑 붙기 위해 String 자체를 사용
             except:
                 None
-            if tmpMove in chessBoard.getLegalMoves():
+            if tmpMove in chessBoard.legal_moves:
                 move = strMove  # tmpMove가 legal이면 추가
                 score = softMax[ArgMaxOfSoftmax[i]]
                 print(i + 1, "번째 선택된 점수 : ", score, " move: ", move)
@@ -234,7 +241,7 @@ class DeepPurpleNetwork:
             else:
                 strMove = strMove + "q"
                 tmpMove = chess.Move.from_uci(strMove)
-                if tmpMove in chessBoard.getLegalMoves():
+                if tmpMove in chessBoard.legal_moves:
                     move = strMove  # +"q"  # tmpMove가 legal이면 추가
                     score = softMax[ArgMaxOfSoftmax[i]]
                     print(i + 1, "번째 선택된 점수 : ", score, " move: ", move)
@@ -251,7 +258,22 @@ if __name__ == '__main__':
     board = chess.Board()
 
     a,b,v = rn.getPolicyAndValue(board)
-
-    print("array4096: ",a)
+    print("array4096: ", a)
     print("argmaxOfSoftmax: ", b)
     print("value: ", v)
+    gp = rn.getPolicy(board)
+    print("gp: ", gp)
+    gv = rn.getValue(board)
+    print("gv: ", gv)
+    gm = rn.getMove(board)
+    print("gm: ", gm)
+    aInput=[]
+    aInput.append(a)
+    for i in range(10000):
+        l, ve, c = rn.learning(board, aInput,v)
+        print("l: ", l ," ve: ",ve, " c: ",c)
+        # a, b, v = rn.getPolicyAndValue(board)
+        # print("array4096: ", a)
+        # print("argmaxOfSoftmax: ", b)
+        # print("value: ", v)
+        # print("----------------------")
