@@ -6,14 +6,16 @@ import copy
 import Support.Board2Array as B2A
 from Support.OneHotEncoding import OneHotEncode as OHE
 
-learning_rate= 0.1
-beta = 0.01
+learning_rate= 0.001
+beta = 0.001
 
 class DeepPurpleNetwork:
     def __init__(self,filePath =None):
         self.checkpointPath = filePath
         self.input = None
         self.model(True)
+        self.global_step = 0
+        self.checkpointPath="../Checkpoint/"
 
     def model(self, is_traing = True):
         self.X = tf.placeholder(tf.float32, [None, 8, 8, 35], name="X")  # 체스에서 8X8X10 이미지를 받기 위해 64
@@ -109,7 +111,7 @@ class DeepPurpleNetwork:
         V_Flat_W = tf.get_variable("V_Flat_W", shape=[8 * 8 * 128, 1],initializer=tf.contrib.layers.xavier_initializer())
         V_Flat_W_Regulization = tf.nn.l2_loss(V_Flat_W)
         V_Flat_B = tf.get_variable("V_Flat_B", initializer=tf.random_normal([1], stddev=0.01))
-        self.V_hypothesis = tf.tanh(tf.matmul(V_FlatLayer, V_Flat_W) + V_Flat_B)
+        self.V_hypothesis = tf.tanh(tf.matmul(V_FlatLayer, V_Flat_W))
 
 
         """Cost with L2 Regularization """
@@ -119,10 +121,11 @@ class DeepPurpleNetwork:
         self.logit= tf.nn.softmax_cross_entropy_with_logits(logits=self.P_hypothesis, labels=self.Y)
         self.valueError = tf.square(self.Z - self.V_hypothesis)
         self.cost = tf.add(self.valueError,self.logit)
-        self.cost = tf.reduce_mean(self.cost+beta * regularizer)
+        self.cost = tf.reduce_mean(self.cost+ beta * regularizer)
+        self.cost = tf.reduce_mean(self.cost)
 
-        self.optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(self.cost)
-        # self.optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(self.cost)
+        # self.optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(self.cost)
+        self.optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(self.cost)
         pn_correct_prediction = tf.equal(tf.argmax(self.P_hypothesis, 1), tf.argmax(self.Y, 1))
         vn_correct_prediction = (2 - tf.abs(self.Y - self.V_hypothesis)) / 2
 
@@ -160,13 +163,15 @@ class DeepPurpleNetwork:
             return tf.nn.batch_normalization(bnInput, populationMean, populationVar, beta, gamma, epsilon)
     def learning(self, input, policylabel, valuelabel):
         input = self.getInput(input)
-        l, ve, c, o =self.sess.run([self.logit, self.valueError, self.cost, self.optimizer], feed_dict={self.X: input, self.Y: policylabel, self.Z: valuelabel})
-        return l,ve,c
+        p, l, ve, c, o =self.sess.run([self.P_hypothesis,self.logit, self.valueError, self.cost, self.optimizer], feed_dict={self.X: input, self.Y: policylabel, self.Z: valuelabel})
+        self.saveCheckpoint(self.checkpointPath,1)
+        return p,l,ve,c
     def restore(self):
         self.ckpt = tf.train.get_checkpoint_state(os.path.dirname(self.checkpointPath))
-        self.global_step = int(self.ckpt.model_checkpoint_path.rsplit('-', 1)[1])
+
 
         if self.ckpt and self.ckpt.model_checkpoint_path:
+            self.global_step = int(self.ckpt.model_checkpoint_path.rsplit('-', 1)[1])
             self.saver.restore(self.sess, self.ckpt.model_checkpoint_path)
             print("Checkpoint Path: ", self.ckpt.model_checkpoint_path)
             print("Checkpoint 로딩 완료")
@@ -179,9 +184,9 @@ class DeepPurpleNetwork:
         input.append(B2A.Board2Array().board2array(chessBoard))
         return input
     def getPolicy(self,input):
-        softmaxOfPolicy = tf.nn.softmax(self.P_hypothesis)
+        # softmaxOfPolicy = tf.nn.softmax(self.P_hypothesis)
         input = self.getInput(input)
-        return self.sess.run(softmaxOfPolicy, feed_dict={self.X: input})
+        return self.sess.run(self.P_hypothesis, feed_dict={self.X: input})
     def getValue(self,input):
         input = self.getInput(input)
         return self.sess.run(self.V_hypothesis, feed_dict={self.X: input})
@@ -256,22 +261,28 @@ class DeepPurpleNetwork:
 if __name__ == '__main__':
     rn = DeepPurpleNetwork()
     board = chess.Board()
+    ohe = OHE()
 
-    a,b,v = rn.getPolicyAndValue(board)
-    print("array4096: ", a)
-    print("argmaxOfSoftmax: ", b)
-    print("value: ", v)
-    gp = rn.getPolicy(board)
-    print("gp: ", gp)
-    gv = rn.getValue(board)
-    print("gv: ", gv)
-    gm = rn.getMove(board)
-    print("gm: ", gm)
+    label = ohe.uciMoveToOnehot(ohe.indexToMove4096(0))
+
+    # a,b,v = rn.getPolicyAndValue(board)
+    # print("array4096: ", a)
+    # print("argmaxOfSoftmax: ", b)
+    # print("value: ", v)
+    # gp = rn.getPolicy(board)
+    # print("gp: ", gp)
+    # gv = rn.getValue(board)
+    # print("gv: ", gv)
+    # gm = rn.getMove(board)
+    # print("gm: ", gm)
     aInput=[]
-    aInput.append(a)
+    aInput.append(label)
+    rn.restore()
     for i in range(10000):
-        l, ve, c = rn.learning(board, aInput,v)
-        print("l: ", l ," ve: ",ve, " c: ",c)
+        p, l, ve, c = rn.learning(board, aInput,[[-1]])
+        print("logit: ", l ," ve: ",ve, " c: ",c)
+        # print("p: ",p)
+        # print("Y: ",aInput)
         # a, b, v = rn.getPolicyAndValue(board)
         # print("array4096: ", a)
         # print("argmaxOfSoftmax: ", b)
