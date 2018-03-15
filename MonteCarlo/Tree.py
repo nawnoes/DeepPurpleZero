@@ -6,11 +6,11 @@ import chess
 
 class Tree:
 
-    def __init__(self): # 체스보드의 현재 상태를 입력받아 board_stack에 전달
+    def __init__(self,path): # 체스보드의 현재 상태를 입력받아 board_stack에 전달
         self.root_Node = None
         self.currentNode = None#현재 가리키는 노드를 임시로 저장
         self.board_stack = None #MCTS에서 각노드의 명령어를 사용할 Board_Stack
-        self.deepPurpleNetwork = DPN()
+        self.deepPurpleNetwork = DPN(path,is_traing=False)
         self.ohe = OHE()
         self.thresholdOfPolicyNetwork = 0.01
 
@@ -51,25 +51,21 @@ class Tree:
         self.currentNode = node
     def add_ChildNode(self,node): #tree에서 currentNode에 자식 추가
         self.currentNode.add_ChildNode(node)
-    def expand_RL_PolicyNetwork(self):
-        tmpBoard = self.board_stack.get_ChessBoard()
-        turn =tmpBoard.turn
-
-        ###### 강화학습된 정책망을 이용하여 확장하기 ########
-        ### 추후에 강화학습 학습 후 expandedChild에 삽입 ###
-        expandedChild = None
-        expandedChild.set_Color(not turn)
-        self.currentNode.add_ChildNode(expandedChild)
-        self.tree.set_CurrentNode(expandedChild)
+    def getCurrentNodeValue(self):
+        if not self.currentNode.is_array4096():
+            tmpBoard = self.board_stack.get_ChessBoard()
+            array4096, argmaxOfSoftmax, value = self.deepPurpleNetwork.getPolicyAndValue(tmpBoard)
+            self.currentNode.setPolicyAndValue(array4096, argmaxOfSoftmax, value)
+            return value
+        else:
+            return self.currentNode.get_valueScore()
     # policy
     def makeNextChild(self):
 
         if not self.currentNode.is_array4096():
             tmpBoard = self.board_stack.get_ChessBoard()
-            array4096, argmaxOfSoftmax, value = self.deepPurpleNetwork.getPolicyAndValue(tmpBoard)
-            self.currentNode.set_array4096(array4096)
-            self.currentNode.set_argmaxOfSoftmax(argmaxOfSoftmax)
-            self.currentNode.set_valueScore(value)
+            array4096, argmaxOfSoftmax,value = self.deepPurpleNetwork.getPolicyAndValue(tmpBoard)
+            self.currentNode.setPolicyAndValue(array4096, argmaxOfSoftmax,value)
 
         madeNode = self.get_BestQuNode()
         # q+u 값을 최대화하는 노드 선택
@@ -79,7 +75,7 @@ class Tree:
             self.currentNode.plus_1_NextChildIndex()
             self.currentNode.add_ChildNode(madeNode)
 
-        self.currentNode.renewForSelection()
+        # self.currentNode.renewForSelection()
         self.set_CurrentNode(madeNode)
         self.currentNode.add_Visit(1)
         self.board_stack.stack_push(madeNode.get_Command())
@@ -113,6 +109,8 @@ class Tree:
             del newNode
 
         return maxQuNode
+
+    #랜덤으로 자식을 생성하는데 있어서 문제
     def get_NextLegalCommandNode(self, bruteForce = False):
         #legal Command를 가진 Node만 return
         argmaxOfSoftmax = self.currentNode.get_argmaxOfSoftmax()
@@ -120,7 +118,6 @@ class Tree:
         color = not self.currentNode.get_Color()
         numOfLegalMoves =len(self.board_stack.get_ChessBoard().legal_moves)
         numOfChild = self.currentNode.get_LengthOfChild()
-        nextChildIndex = self.currentNode.get_NextChildIndex()
 
         # 언제 정지시켜야하는지 조건을 확인해야 한다.
 
@@ -158,6 +155,8 @@ class Tree:
         return convertedResult
     def get_currentBoard(self):
         return self.board_stack.get_ChessBoard()
+    def getNetwork(self):
+        return self.deepPurpleNetwork
     def check_board(self,board):
         flag = False
         if board.can_claim_threefold_repetition():

@@ -10,12 +10,12 @@ learning_rate= 0.001
 beta = 0.001
 
 class DeepPurpleNetwork:
-    def __init__(self,filePath =None):
+    def __init__(self,filePath ="../Checkpoint/", is_traing =True):
         self.checkpointPath = filePath
         self.input = None
-        self.model(True)
+        self.model(is_traing)
         self.global_step = 0
-        self.checkpointPath="../Checkpoint/"
+        self.checkpointPath=filePath
 
     def model(self, is_traing = True):
         self.X = tf.placeholder(tf.float32, [None, 8, 8, 35], name="X")  # 체스에서 8X8X10 이미지를 받기 위해 64
@@ -166,6 +166,10 @@ class DeepPurpleNetwork:
         p, l, ve, c, o =self.sess.run([self.P_hypothesis,self.logit, self.valueError, self.cost, self.optimizer], feed_dict={self.X: input, self.Y: policylabel, self.Z: valuelabel})
         self.saveCheckpoint(self.checkpointPath,1)
         return p,l,ve,c
+    def predict(self, input):
+        input = self.getInput(input)
+        policy, value = self.sess.run([self.P_hypothesis, self.V_hypothesis], feed_dict={self.X:input} )
+        return policy, value
     def restore(self):
         self.ckpt = tf.train.get_checkpoint_state(os.path.dirname(self.checkpointPath))
 
@@ -259,7 +263,13 @@ class DeepPurpleNetwork:
             fullFilePath = os.path.join(self.checkpointPath, filename)
             os.remove(fullFilePath)
 if __name__ == '__main__':
-    rn = DeepPurpleNetwork()
+    g1 = tf.Graph()
+    g2 = tf.Graph()
+    with g1.as_default():
+        rn = DeepPurpleNetwork()
+    with g2.as_default():
+        pNet = DeepPurpleNetwork(False)
+
     board = chess.Board()
     ohe = OHE()
 
@@ -278,9 +288,18 @@ if __name__ == '__main__':
     aInput=[]
     aInput.append(label)
     rn.restore()
-    for i in range(10000):
-        p, l, ve, c = rn.learning(board, aInput,[[-1]])
-        print("logit: ", l ," ve: ",ve, " c: ",c)
+    pNet.restore()
+    p,v = pNet.predict(board)
+    rp, rv = rn.predict(board)
+
+    print(p)
+    print(v)
+    print(rp)
+    print(rv)
+
+    # for i in range(10000):
+    #     p, l, ve, c = rn.learning(board, aInput,[[-1]])
+    #     print("logit: ", l ," ve: ",ve, " c: ",c)
         # print("p: ",p)
         # print("Y: ",aInput)
         # a, b, v = rn.getPolicyAndValue(board)

@@ -5,8 +5,8 @@ import chess
 import threading
 
 class MontecarloTreeSearch():
-    def __init__(self, searchRepeatNum=500, searchDepth = 10, expandPoint=1000):
-        self.tree = TR.Tree()
+    def __init__(self,path, searchRepeatNum=500, searchDepth = 10, expandPoint=1000):
+        self.tree = TR.Tree(path)
         self.searchDepth = searchDepth
         self.expandPoint = expandPoint
         self.searchRepeatNum = searchRepeatNum
@@ -35,40 +35,39 @@ class MontecarloTreeSearch():
         gameOver = self.tree.get_GameOver()
         job =[]
         selectionResult = False
-        while not( gameOver or selectionResult):
+        count =0
+        while not( gameOver or selectionResult or count > 100):
             selectionResult = self.selection(depth)
             depth +=1
+            count +=1
             gameOver = self.tree.get_GameOver()
         #selection이 끝난 후 트리가 가리키는 마지막 노드의 값을 Queue에 추가
         job.append(self.tree.get_CurrentNode())
         job.append(self.tree.get_currentBoard())
-        if not gameOver:
+        if not gameOver :
             self.evaluationQueue.append(job)
-            updateNode = self.evaluationAndExpansion()
+            updateNode = self.tree.get_CurrentNode()
+            value = self.evaluation(updateNode)[0][0]
             gameResult = 0
-            self.backpropagation(updateNode,gameResult)
+            self.backpropagation(updateNode,gameResult,value)
         else:
-            #여기서 누수가 발생할 수 도 큐에서 들어가는 것이 있고
+            #여기서 누수가 발생할 수도, 큐에서 들어가는 것이 있고
             #빠져나오지느 못하고 있는 큐가 있다.
             #트리생성 중 게임이 종료되면 실제 결과를 적용
             realResult = self.tree.translatedResult()
             del job
             # print("realResult: ",realResult)
-            #시뮬레이션으로 얻은 결과를 보다 크게 점수를 부여 10배
-            self.backpropagation(self.tree.get_CurrentNode(),realResult*10, 0)
+            self.backpropagation(self.tree.get_CurrentNode(),realResult, 0)
 
 
     def selection(self, depth):
-        if depth > self.searchDepth:
+        if depth >= self.searchDepth:
            return True
         else:
             self.evaluationAndExpansion()
-
-        if depth == self.searchDepth:
-            return True
-        else:
             return False
-
+    def evaluation(self,node):
+        return self.tree.getCurrentNodeValue()
     def evaluationAndExpansion(self):
         self.tree.makeNextChild()
         currentNode = self.tree.get_CurrentNode()
@@ -82,7 +81,7 @@ class MontecarloTreeSearch():
                 print("update Node None")
             parentNode = updateNode.get_Parent()
             updateNode.renewForBackpropagation(gameResult, valueNetworkResult)
-            return self.backpropagation(parentNode, gameResult, updateNode.get_valueScore)
+            return self.backpropagation(parentNode, gameResult, updateNode.get_valueScore())
     def convertResult(self,result):
         rm = {'1-0': 1, '0-1': -1, '1/2-1/2': 0,'*': 0}
         # 게임의 끝, ( 백승 = 1, 흑승 = -1, 무승부, 0 )
@@ -96,6 +95,8 @@ class MontecarloTreeSearch():
         index = rootNode.get_maxVisitedChildIndex()
         self.tree.root_Node.print_childInfo()
         return rootNode.child[index].command
+    def getNetwork(self):
+        self.tree.getNetwork()
 
 if __name__ == "__main__":
     fens = [

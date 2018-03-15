@@ -20,6 +20,7 @@ class Node:
         self.lamda = 0.5
         self.n_vl = 0#3 나중에 멀티 프로세싱으로 여러개의 스레드가 트리를 생성할 때 사용
         self.nextChildIndex=0
+        self.child=[]
 
     def __del__(self):
         None
@@ -34,6 +35,11 @@ class Node:
         self.argmaxOfSoftmax = argmaxOfSotfmax
     def set_valueScore(self,value):
         self.valueScore = value
+    def setPolicyAndValue(self,array4096, argmaxOfSoftmax,value):
+        self.array4096 = array4096
+        self.argmaxOfSoftmax = argmaxOfSoftmax
+        self.valueScore = value
+
     def is_child(self,anyNode):
         for child in self.child:
             if anyNode == child:
@@ -91,13 +97,17 @@ class Node:
             value = -self.valueScore
         else:
             value = self.valueScore
-        q = value / self.visit
+        q =self.lamda * (self.sumGameResult / self.visit) +(1-self.lamda)*(value / self.visit)
         return q
     def calc_u(self):
-        # u = Cpuct * self.policy_Score * (math.sqrt(self.sum_other_Visit())/(self.N_rollout+1))
-        # u = Cpuct * self.policy_Score * (math.sqrt(self.sum_Siblings_Visit()+1) / (self.N_rollout + 1))
-        u= Cpuct * self.policy_Score * (math.sqrt(self.sum_Siblings_Visit()) / (self.N_rollout + 1))
-        # u = Cpuct * self.policy_Score * (math.sqrt(self.sum_other_Visit()+1) / (self.N_rollout + 1))
+        u = Cpuct * self.policyScore * (math.sqrt(self.sum_other_Visit())/(self.visit+1))
+
+        print("ps : ", self.policyScore)
+        print("visit: ", self.visit)
+        print("-----------------------")
+        # u = Cpuct * self.policyScore * (math.sqrt(self.sum_Siblings_Visit()+1) / (self.visit + 1))
+        # u= Cpuct * self.policyScore * (math.sqrt(self.sum_Siblings_Visit()) / (self.visit + 1))
+        # u = Cpuct * self.policyScore * (math.sqrt(self.sum_other_Visit()+1) / (self.visit + 1))
         return u
     def sum_other_Visit(self):
         sumAll = self.parent.sum_childVisit()
@@ -109,17 +119,15 @@ class Node:
             sum += self.child[i].visit
         return sum
     def sum_Siblings_Visit(self):
-        # lenth = len(self.child)
-        # sum = 0
-        # for i in range(lenth):
-        #     sum += self.child[i].get_N_rollout()
         return self.parent.get_visit()
     def renewForSelection(self):
-        self.N_rollout += self.n_vl
-        if self.color == False: #흑의 경우
-            self.W_rollout += self.n_vl
-        else:
-            self.W_rollout -= self.n_vl
+        # 멀티 프로세싱 사용 시, 다른 노드를 탐색하기 위해
+        pass
+        # self.N_rollout += self.n_vl
+        # if self.color == False: #흑의 경우
+        #     self.W_rollout += self.n_vl
+        # else:
+        #     self.W_rollout -= self.n_vl
     def renewForBackpropagation(self,gameResult, valueNetworkResult):
         self.sumValueScore += valueNetworkResult
         self.sumGameResult += gameResult
@@ -193,13 +201,13 @@ class Node:
         lenth = len(self.child)
         print("child")
         for i in range(lenth):
-            print(i,"> W_rollout:", self.child[i].get_W_rollout(), "W_value:", self.child[i].get_W_value(), " visit",self.child[i].get_visit())
+            # print(i,"> W_rollout:", self.child[i].get_W_rollout(), "W_value:", self.child[i].get_W_value(), " visit",self.child[i].get_visit())
             print("Q+u : ", self.child[i].get_Qu())
-            print("ps : ",self.child[i].policy_Score)
+            print("ps : ",self.child[i].policyScore)
             print("q : ",self.child[i].calc_Q())
             print("u : ",self.child[i].calc_u())
-            print("N_rollout: ",self.child[i].get_N_rollout()," N_value: ",self.child[i].get_N_value())
             print("move : ", self.child[i].get_Command())
+            print("visit: ",self.child[i].get_visit())
     def trans_result(self, result):
         rm = {'1-0': 1, '0-1': -1, '1/2-1/2': 0}  # 게임의 끝, ( 백승 = 1, 흑승 = -1, 무승부, 0 )
         return rm[result]
