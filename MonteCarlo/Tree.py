@@ -3,6 +3,7 @@ import Support.Board_Stack as BS
 from NeuralNetwork.ResNet import DeepPurpleNetwork as DPN
 from Support.OneHotEncoding import OneHotEncode as OHE
 import chess
+import Support.MyLogger as MYLOGGER
 
 class Tree:
 
@@ -29,7 +30,7 @@ class Tree:
             self.reset_board(self.board_stack.get_ChessBoard())
             print("상속 실패")
     def set_RootNode(self):
-        self.root_Node = Node.Node(None,None,self.board_stack.get_Color()) # 루트 노드 생성
+        self.root_Node = Node.Node(None,None,0,self.board_stack.get_Color()) # 루트 노드 생성
         self.currentNode = self.root_Node #루트노드가 생성될 때 currentNode로 설정
     def go_root(self,Board):
         self.currentNode = self.root_Node
@@ -59,6 +60,9 @@ class Tree:
             return value
         else:
             return self.currentNode.get_valueScore()
+
+    def makeNextChildWithNNComputingEverytime(self):
+        pass
     # policy
     def makeNextChild(self):
 
@@ -67,15 +71,18 @@ class Tree:
             array4096, argmaxOfSoftmax,value = self.deepPurpleNetwork.getPolicyAndValue(tmpBoard)
             self.currentNode.setPolicyAndValue(array4096, argmaxOfSoftmax,value)
 
-        madeNode = self.get_BestQuNode()
+        index, madeNode = self.get_BestQuNode()
         # q+u 값을 최대화하는 노드 선택
 
-        if not self.currentNode.is_child(madeNode):
+        if index != -1 :
             #자식 노드가 아닌 경우에만 자식으로 추가
-            self.currentNode.plus_1_NextChildIndex()
+            # self.currentNode.plus_1_NextChildIndex()
+            self.currentNode.set_FinalChildIndex(index)
             self.currentNode.add_ChildNode(madeNode)
 
         # self.currentNode.renewForSelection()
+        str ="Node Command: '"+madeNode.get_Command()+"' / Q = %f"%madeNode.calc_Q()+" / U = %f"%madeNode.calc_u()+" Q+U = %f" %madeNode.get_Qu()
+        MYLOGGER.debuglog(str)
         self.set_CurrentNode(madeNode)
         self.currentNode.add_Visit(1)
         self.board_stack.stack_push(madeNode.get_Command())
@@ -83,32 +90,58 @@ class Tree:
         #Qu는 가장 Q(s,a) + u(s,a) 의 값
         #자식 노드의 수 다음 배열에서 Node를 만들어서
 
-        newNode = self.get_NextLegalCommandNode()
+        index, newNode = self.get_NextLegalCommandNode()
 
         childList = self.currentNode.get_Child()
         if len(childList) == 0 and newNode != None: #자식이 없는 경우
             return newNode
 
         if newNode == None:
-            if self.currentNode.get_LengthOfChild() == 0:
-                #자식이 하나도 없는 경우 무조건 Node를 찾아서 반환
-                newNode = self.get_NextLegalCommandNode(bruteForce=True)
-                maxQuNode = newNode
-            else:
-                maxQuNode = childList[0]
-        else:
+            # 기존 사용 코드
+            # 자식이 있다면 계산 속도를 빠르게 하기 위해 붙임.
+            # 18.03.23 21시, 아직 어떤 부작용 있는지 확인 X
+            # if self.currentNode.get_LengthOfChild() == 0:
+            #     #자식이 하나도 없는 경우 무조건 Node를 찾아서 반환
+            #     newNode = self.get_NextLegalCommandNode(bruteForce=True)
+            #     maxQuNode = newNode
+            # else:
+            #     maxQuNode = childList[0]
+            index, newNode = self.get_NextLegalCommandNode(bruteForce=True)
             maxQuNode = newNode
 
+        else:
+            maxQuNode = newNode
+        if maxQuNode == None:
+            #bruteForce로 새로운 자식을 찾을 수 없을때, 가장 처음 노드를 비교대상으로 지정
+            maxQuNode = childList[0]
+
         for node in childList:
+
+            logstr = "COMPARE NODE: maxQuNode %s Q(%f) + u(%f) =  %f" %(maxQuNode.get_Command(),maxQuNode.calc_Q(),maxQuNode.calc_u(), maxQuNode.get_Qu()) + " / node %s Q(%f) + u(%f) = %f"%(node.get_Command() ,node.calc_Q(),node.calc_u(),node.get_Qu())+ "turn = " + str(maxQuNode.get_Color())
+            MYLOGGER.debuglog(logstr)
             if node.get_Qu() > maxQuNode.get_Qu():
                 maxQuNode = node
 
-        if self.currentNode.is_child(maxQuNode):
+
+
+        condition = self.currentNode.is_child(maxQuNode)
+        if condition == 1:
             #자식인경우 새로 생성된 newNode는 사용되지 않았으므로
             #소멸
             del newNode
-
-        return maxQuNode
+            #기존의 자식임을 알리는 index -1
+            return -1, maxQuNode
+        elif condition == -1:
+            del newNode
+            # 기존의 자식임을 알리는 index -1
+            # 반복문을 같은것을 2번 돌게 되므로 개선 필요
+            sameCommandNode= self.currentNode.get_sameCommandChild(maxQuNode)
+            return -1, sameCommandNode
+        else:
+            #maxQuNode는 자식이 아니며
+            #새로 생성된 newNode이므로
+            #탐색을 빠르게 하기 위한 finalChildindex 반환
+            return index, maxQuNode
 
     #랜덤으로 자식을 생성하는데 있어서 문제
     def get_NextLegalCommandNode(self, bruteForce = False):
@@ -118,31 +151,31 @@ class Tree:
         color = not self.currentNode.get_Color()
         numOfLegalMoves =len(self.board_stack.get_ChessBoard().legal_moves)
         numOfChild = self.currentNode.get_LengthOfChild()
+        finalIndex = self.currentNode.get_FinalChildIndex()
 
         # 언제 정지시켜야하는지 조건을 확인해야 한다.
-
         if bruteForce:
             repeatNum = 4096
         else:
             repeatNum = numOfLegalMoves - numOfChild
 
         for i in range(repeatNum):
-            index = argmaxOfSoftmax[numOfChild + i]
+            index = argmaxOfSoftmax[(finalIndex+1 + i) % 4096]
             command = self.ohe.indexToMove4096(index)
             tmpCommand = chess.Move.from_uci(command)
 
             if self.thresholdOfPolicyNetwork > array4096[index] and not bruteForce:
                 #정책망의 기준값 보다 작다면 반환하지 않는다.
                 break
-            if tmpCommand in self.board_stack.get_ChessBoard().legal_moves:
-                return Node.Node(self.currentNode, command, array4096[index], color)
+            if (tmpCommand in self.board_stack.get_ChessBoard().legal_moves) and not(self.currentNode.is_SameCommandInChild(command)):
+                return index, Node.Node(self.currentNode, command, array4096[index], color)
             else:
                 tmpCommand = chess.Move.from_uci(command + "q")
-                if tmpCommand in self.board_stack.get_ChessBoard().legal_moves:
+                if (tmpCommand in self.board_stack.get_ChessBoard().legal_moves)and not(self.currentNode.is_SameCommandInChild(command)):
                     command = command + "q"
-                    return Node.Node(self.currentNode, command, array4096[index], color)
+                    return index, Node.Node(self.currentNode, command, array4096[index], color)
         #can't make child anymore
-        return None
+        return None, None
     def get_RootNode(self):
         return self.root_Node
     def get_GameOver(self):

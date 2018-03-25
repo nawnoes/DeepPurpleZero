@@ -3,9 +3,10 @@ import MonteCarlo.Tree as TR
 # from MonteCarlo.NeuralNetwork import Rollout as RO
 import chess
 import threading
+import Support.MyLogger as MYLOGGER
 
 class MontecarloTreeSearch():
-    def __init__(self,path, searchRepeatNum=500, searchDepth = 10, expandPoint=1000):
+    def __init__(self,path, searchRepeatNum=100, searchDepth = 1000, expandPoint=1000):
         self.tree = TR.Tree(path)
         self.searchDepth = searchDepth
         self.expandPoint = expandPoint
@@ -21,16 +22,18 @@ class MontecarloTreeSearch():
         #추후에 트리 상속으로 개선
         self.tree.reset_board(chessBoard)
         # print("몬테카를로 Search 시작")
+
         for i in range(self.searchRepeatNum):
             if i % 10 == 0:
                 print("\r%d" % i , end="")
+            MYLOGGER.debuglog("---------%d search---------"%i)
             self.search(chessBoard)
         nextMove = self.getNextMove()
 
         return nextMove
 
     def search(self,chessBoard):
-        depth = 2
+        depth = 1
         self.tree.go_root(chessBoard)
         gameOver = self.tree.get_GameOver()
         job =[]
@@ -47,7 +50,7 @@ class MontecarloTreeSearch():
         if not gameOver :
             self.evaluationQueue.append(job)
             updateNode = self.tree.get_CurrentNode()
-            value = self.evaluation(updateNode)[0][0]
+            value = self.evaluation(updateNode)
             gameResult = 0
             self.backpropagation(updateNode,gameResult,value)
         else:
@@ -94,6 +97,7 @@ class MontecarloTreeSearch():
         rootNode = self.tree.get_RootNode()
         index = rootNode.get_maxVisitedChildIndex()
         self.tree.root_Node.print_childInfo()
+
         return rootNode.child[index].command
     def getNetwork(self):
         self.tree.getNetwork()

@@ -10,7 +10,7 @@ class Node:
         self.color = color # 현재 노드의 색깔 True면 흰색, False 검은색
         self.visit = 0  # 방문횟수
         self.policyScore = policy_Score # 정책망
-        self.valueScore = None
+        self.valueScore = 0
         self.sumValueScore = 0
         self.sumGameResult = 0
         self.parent = parent  # 부모노드
@@ -19,11 +19,13 @@ class Node:
         self.bear_Flag = False
         self.lamda = 0.5
         self.n_vl = 0#3 나중에 멀티 프로세싱으로 여러개의 스레드가 트리를 생성할 때 사용
-        self.nextChildIndex=0
+        self.finalChildIndex=0
         self.child=[]
 
     def __del__(self):
         None
+    def set_FinalChildIndex(self,num):
+        self.finalChildIndex = num
     def set_Child(self, child):
         self.on_Flag()
         self.child = child
@@ -39,17 +41,34 @@ class Node:
         self.array4096 = array4096
         self.argmaxOfSoftmax = argmaxOfSoftmax
         self.valueScore = value
+    def get_sameCommandChild(self,anyNode):
+        for child in self.child:
+            if anyNode.get_Command() == child.get_Command():
+                return child
+        return None
 
     def is_child(self,anyNode):
         for child in self.child:
             if anyNode == child:
+                return 1
+            if anyNode.get_Command() == child.get_Command():
+                return -1
+        return 0
+    def is_SameCommandInChild(self,Command):
+        for child in self.child:
+            if Command == child.get_Command():
                 return True
         return False
+
     def is_array4096(self):
         if self.array4096 == None:
             return False
         else:
             return True
+    def get_SumGameResult(self):
+        return self.sumGameResult
+    def get_FinalChildIndex(self):
+        return self.finalChildIndex
     def get_valueScore(self):
         return self.valueScore
     def get_array4096(self):
@@ -97,17 +116,12 @@ class Node:
             value = -self.valueScore
         else:
             value = self.valueScore
-        q =self.lamda * (self.sumGameResult / self.visit) +(1-self.lamda)*(value / self.visit)
+
+        visit = self.visit+1
+        q =self.lamda * (self.sumGameResult / visit) +(1-self.lamda)*(value / visit)
         return q
     def calc_u(self):
         u = Cpuct * self.policyScore * (math.sqrt(self.sum_other_Visit())/(self.visit+1))
-
-        print("ps : ", self.policyScore)
-        print("visit: ", self.visit)
-        print("-----------------------")
-        # u = Cpuct * self.policyScore * (math.sqrt(self.sum_Siblings_Visit()+1) / (self.visit + 1))
-        # u= Cpuct * self.policyScore * (math.sqrt(self.sum_Siblings_Visit()) / (self.visit + 1))
-        # u = Cpuct * self.policyScore * (math.sqrt(self.sum_other_Visit()+1) / (self.visit + 1))
         return u
     def sum_other_Visit(self):
         sumAll = self.parent.sum_childVisit()
@@ -202,12 +216,13 @@ class Node:
         print("child")
         for i in range(lenth):
             # print(i,"> W_rollout:", self.child[i].get_W_rollout(), "W_value:", self.child[i].get_W_value(), " visit",self.child[i].get_visit())
-            print("Q+u : ", self.child[i].get_Qu())
-            print("ps : ",self.child[i].policyScore)
-            print("q : ",self.child[i].calc_Q())
-            print("u : ",self.child[i].calc_u())
-            print("move : ", self.child[i].get_Command())
+            print("Q+u : ", self.child[i].get_Qu(),"   q : ",self.child[i].calc_Q(),"  u : ",self.child[i].calc_u())
+            print("PolicyScore : ",self.child[i].policyScore,"     ValueScore : ", self.child[i].valueScore)
+            print("SumOfGameResult: ",self.child[i].get_SumGameResult())
+            print("move : ", self.child[i].get_Command(),"      visit: ",self.child[i].get_visit())
             print("visit: ",self.child[i].get_visit())
+            print("-----------------------------------")
+
     def trans_result(self, result):
         rm = {'1-0': 1, '0-1': -1, '1/2-1/2': 0}  # 게임의 끝, ( 백승 = 1, 흑승 = -1, 무승부, 0 )
         return rm[result]

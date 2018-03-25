@@ -88,7 +88,7 @@ class Play:
         gameCount = 0
 
         while not chessBoard.is_game_over():
-            if gameCount >100:
+            if gameCount >1000:
                 break
             print("a b c d e f g h")
             print("---------------")
@@ -97,14 +97,16 @@ class Play:
             print("a b c d e f g h")
             if chessBoard.turn:
                 move = white.get_MCTS(chessBoard)
+                print("white Turn : ", True == chessBoard.turn)
                 # print("백: ", move)#, ", score: ", score)
             else:
                 move = black.get_MCTS(chessBoard)
+                print("black Turn", False==chessBoard.turn)
                 # print("흑: ", move)#, ", score: ", score)
             chessBoard.push(chess.Move.from_uci(move))
             gameCount += 1
 
-        if gameCount>100:
+        if gameCount>1000:
             result = '1/2-1/2'
         else:
             result = chessBoard.result()
@@ -120,7 +122,7 @@ class Play:
 
         # 게임이 끝났을 때 체스 데이터를 저장
         fenDatas = self.saveRLData(chessBoard, result)
-        self.reinforcementLearning(fenDatas)
+        # self.reinforcementLearning(fenDatas)
 
     def fixResult(self, turn, result):
         if result == "1/2-1/2":

@@ -201,7 +201,7 @@ class DeepPurpleNetwork:
         array4096 = policy
         array4096 = np.array(array4096[0])
         argmaxOfSoftmax = (-array4096).argsort()
-        return array4096, argmaxOfSoftmax, value
+        return array4096, argmaxOfSoftmax, value[0][0]
     def saveCheckpoint(self, filePath, batch_size):
         self.global_step += batch_size
         self.saver.save(self.sess, filePath+"path", global_step=self.global_step)
