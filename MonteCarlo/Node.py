@@ -114,11 +114,12 @@ class Node:
         #Q(s,a) = sum(V(s')) / N(s,a)
         if self.color == False: #흑일때 -부호 붙여서 계산
             value = -self.valueScore
+            gameResult = - self.sumGameResult
         else:
             value = self.valueScore
-
+            gameResult = self.sumGameResult
         visit = self.visit+1
-        q =self.lamda * (self.sumGameResult / visit) +(1-self.lamda)*(value / visit)
+        q =self.lamda * (gameResult / visit) +(1-self.lamda)*(value / visit)
         return q
     def calc_u(self):
         u = Cpuct * self.policyScore * (math.sqrt(self.sum_other_Visit())/(self.visit+1))
@@ -143,7 +144,7 @@ class Node:
         # else:
         #     self.W_rollout -= self.n_vl
     def renewForBackpropagation(self,gameResult, valueNetworkResult):
-        self.sumValueScore += valueNetworkResult
+        self.valueScore += valueNetworkResult
         self.sumGameResult += gameResult
     def get_bestChild(self):
         #child에서 가장 selectingScore가 최대인 후보를 선택

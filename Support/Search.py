@@ -51,7 +51,3 @@ class BFS:
         for child in preQBuffer:
             str += "command: %s\t"%child.command
         MYLOGGER.debuglog(str)
-
-        for child in preQBuffer:
-            str += "command: %s\t"%child.command
-        MYLOGGER.debuglog(str)

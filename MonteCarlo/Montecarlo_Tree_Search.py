@@ -4,9 +4,10 @@ import MonteCarlo.Tree as TR
 import chess
 import threading
 import Support.MyLogger as MYLOGGER
+import time
 
 class MontecarloTreeSearch():
-    def __init__(self,path, searchRepeatNum=100, searchDepth = 1000, expandPoint=1000):
+    def __init__(self,path, searchRepeatNum=100, searchDepth = 20, expandPoint=1000):
         self.tree = TR.Tree(path)
         self.searchDepth = searchDepth
         self.expandPoint = expandPoint
@@ -22,12 +23,15 @@ class MontecarloTreeSearch():
         #추후에 트리 상속으로 개선
         self.tree.reset_board(chessBoard)
         # print("몬테카를로 Search 시작")
-
+        startTime = time.time()
         for i in range(self.searchRepeatNum):
             if i % 10 == 0:
                 print("\r%d" % i , end="")
             MYLOGGER.debuglog("---------%d search---------"%i)
             self.search(chessBoard)
+            endTime = time.time()
+            if (endTime-startTime)>60:
+                break
         nextMove = self.getNextMove()
 
         return nextMove
@@ -38,12 +42,12 @@ class MontecarloTreeSearch():
         gameOver = self.tree.get_GameOver()
         job =[]
         selectionResult = False
-        count =0
-        while not( gameOver or selectionResult or count > 100):
+        while not( gameOver or selectionResult or depth>self.searchDepth):
             selectionResult = self.selection(depth)
             depth +=1
-            count +=1
             gameOver = self.tree.get_GameOver()
+        logstr = "------------------ game result = "+str(self.tree.translatedResult())+" --------------"
+        MYLOGGER.debuglog(logstr)
         #selection이 끝난 후 트리가 가리키는 마지막 노드의 값을 Queue에 추가
         job.append(self.tree.get_CurrentNode())
         job.append(self.tree.get_currentBoard())

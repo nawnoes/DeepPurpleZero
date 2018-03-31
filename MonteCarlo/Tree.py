@@ -81,8 +81,9 @@ class Tree:
             self.currentNode.add_ChildNode(madeNode)
 
         # self.currentNode.renewForSelection()
-        str ="Node Command: '"+madeNode.get_Command()+"' / Q = %f"%madeNode.calc_Q()+" / U = %f"%madeNode.calc_u()+" Q+U = %f" %madeNode.get_Qu()
-        MYLOGGER.debuglog(str)
+        ######로그 추가
+        # str ="Node Command: '"+madeNode.get_Command()+"' / Q = %f"%madeNode.calc_Q()+" / U = %f"%madeNode.calc_u()+" Q+U = %f" %madeNode.get_Qu()
+        # MYLOGGER.debuglog(str)
         self.set_CurrentNode(madeNode)
         self.currentNode.add_Visit(1)
         self.board_stack.stack_push(madeNode.get_Command())
@@ -117,8 +118,8 @@ class Tree:
 
         for node in childList:
 
-            logstr = "COMPARE NODE: maxQuNode %s Q(%f) + u(%f) =  %f" %(maxQuNode.get_Command(),maxQuNode.calc_Q(),maxQuNode.calc_u(), maxQuNode.get_Qu()) + " / node %s Q(%f) + u(%f) = %f"%(node.get_Command() ,node.calc_Q(),node.calc_u(),node.get_Qu())+ "turn = " + str(maxQuNode.get_Color())
-            MYLOGGER.debuglog(logstr)
+            # logstr = "COMPARE NODE: maxQuNode %s Q(%f) + u(%f) =  %f" %(maxQuNode.get_Command(),maxQuNode.calc_Q(),maxQuNode.calc_u(), maxQuNode.get_Qu()) + " / node %s Q(%f) + u(%f) = %f"%(node.get_Command() ,node.calc_Q(),node.calc_u(),node.get_Qu())+ "turn = " + str(maxQuNode.get_Color())
+            # MYLOGGER.debuglog(logstr)
             if node.get_Qu() > maxQuNode.get_Qu():
                 maxQuNode = node
 
