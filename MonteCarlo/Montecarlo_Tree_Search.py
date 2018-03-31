@@ -7,7 +7,7 @@ import Support.MyLogger as MYLOGGER
 import time
 
 class MontecarloTreeSearch():
-    def __init__(self,path, searchRepeatNum=100, searchDepth = 20, expandPoint=1000):
+    def __init__(self,path, searchRepeatNum=1000, searchDepth = 30, expandPoint=1000):
         self.tree = TR.Tree(path)
         self.searchDepth = searchDepth
         self.expandPoint = expandPoint
@@ -27,10 +27,10 @@ class MontecarloTreeSearch():
         for i in range(self.searchRepeatNum):
             if i % 10 == 0:
                 print("\r%d" % i , end="")
-            MYLOGGER.debuglog("---------%d search---------"%i)
+            # MYLOGGER.debuglog("---------%d search---------"%i)
             self.search(chessBoard)
             endTime = time.time()
-            if (endTime-startTime)>60:
+            if (endTime-startTime)>30:
                 break
         nextMove = self.getNextMove()
 
@@ -46,8 +46,8 @@ class MontecarloTreeSearch():
             selectionResult = self.selection(depth)
             depth +=1
             gameOver = self.tree.get_GameOver()
-        logstr = "------------------ game result = "+str(self.tree.translatedResult())+" --------------"
-        MYLOGGER.debuglog(logstr)
+        # logstr = "------------------ game result = "+str(self.tree.translatedResult())+" --------------"
+        # MYLOGGER.debuglog(logstr)
         #selection이 끝난 후 트리가 가리키는 마지막 노드의 값을 Queue에 추가
         job.append(self.tree.get_CurrentNode())
         job.append(self.tree.get_currentBoard())
@@ -88,7 +88,7 @@ class MontecarloTreeSearch():
                 print("update Node None")
             parentNode = updateNode.get_Parent()
             updateNode.renewForBackpropagation(gameResult, valueNetworkResult)
-            return self.backpropagation(parentNode, gameResult, updateNode.get_valueScore())
+            return self.backpropagation(parentNode, gameResult, valueNetworkResult)
     def convertResult(self,result):
         rm = {'1-0': 1, '0-1': -1, '1/2-1/2': 0,'*': 0}
         # 게임의 끝, ( 백승 = 1, 흑승 = -1, 무승부, 0 )

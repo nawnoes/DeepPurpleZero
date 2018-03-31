@@ -149,7 +149,7 @@ class Tree:
         #legal Command를 가진 Node만 return
         argmaxOfSoftmax = self.currentNode.get_argmaxOfSoftmax()
         array4096 = self.currentNode.get_array4096()
-        color = not self.currentNode.get_Color()
+        color = self.currentNode.get_Color()
         numOfLegalMoves =len(self.board_stack.get_ChessBoard().legal_moves)
         numOfChild = self.currentNode.get_LengthOfChild()
         finalIndex = self.currentNode.get_FinalChildIndex()

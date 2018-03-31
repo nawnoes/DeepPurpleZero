@@ -90,6 +90,11 @@ class Play:
         while not chessBoard.is_game_over():
             if gameCount >1000:
                 break
+            print("---------------")
+            if chessBoard.turn:
+                print("White Turn")
+            else:
+                print("Black Turn")
             print("a b c d e f g h")
             print("---------------")
             print(chessBoard, chr(13))
@@ -97,11 +102,9 @@ class Play:
             print("a b c d e f g h")
             if chessBoard.turn:
                 move = white.get_MCTS(chessBoard)
-                print("white Turn : ", True == chessBoard.turn)
                 # print("백: ", move)#, ", score: ", score)
             else:
                 move = black.get_MCTS(chessBoard)
-                print("black Turn", False==chessBoard.turn)
                 # print("흑: ", move)#, ", score: ", score)
             chessBoard.push(chess.Move.from_uci(move))
             gameCount += 1

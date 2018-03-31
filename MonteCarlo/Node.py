@@ -37,6 +37,16 @@ class Node:
         self.argmaxOfSoftmax = argmaxOfSotfmax
     def set_valueScore(self,value):
         self.valueScore = value
+    def get_valueScore(self):
+        if self.color:
+            return self.valueScore
+        else:
+            return -self.valueScore
+    def get_sumValueScore(self):
+        if self.color:
+            return self.sumValueScore
+        else:
+            return -self.sumValueScore
     def setPolicyAndValue(self,array4096, argmaxOfSoftmax,value):
         self.array4096 = array4096
         self.argmaxOfSoftmax = argmaxOfSoftmax
@@ -113,16 +123,16 @@ class Node:
     def calc_Q(self):
         #Q(s,a) = sum(V(s')) / N(s,a)
         if self.color == False: #흑일때 -부호 붙여서 계산
-            value = -self.valueScore
+            value = -self.sumValueScore
             gameResult = - self.sumGameResult
         else:
-            value = self.valueScore
+            value = self.sumValueScore
             gameResult = self.sumGameResult
         visit = self.visit+1
         q =self.lamda * (gameResult / visit) +(1-self.lamda)*(value / visit)
         return q
     def calc_u(self):
-        u = Cpuct * self.policyScore * (math.sqrt(self.sum_other_Visit())/(self.visit+1))
+        u = Cpuct * self.policyScore * (math.sqrt(self.getParentVisit())/(self.visit+1))
         return u
     def sum_other_Visit(self):
         sumAll = self.parent.sum_childVisit()
@@ -133,8 +143,12 @@ class Node:
         for i in range(lenth):
             sum += self.child[i].visit
         return sum
-    def sum_Siblings_Visit(self):
-        return self.parent.get_visit()
+    def getParentVisit(self):
+        visit = self.parent.get_visit()
+        if visit == 0:
+            return 1
+        else:
+            return visit
     def renewForSelection(self):
         # 멀티 프로세싱 사용 시, 다른 노드를 탐색하기 위해
         pass
@@ -144,7 +158,7 @@ class Node:
         # else:
         #     self.W_rollout -= self.n_vl
     def renewForBackpropagation(self,gameResult, valueNetworkResult):
-        self.valueScore += valueNetworkResult
+        self.sumValueScore += valueNetworkResult
         self.sumGameResult += gameResult
     def get_bestChild(self):
         #child에서 가장 selectingScore가 최대인 후보를 선택
@@ -217,11 +231,10 @@ class Node:
         print("child")
         for i in range(lenth):
             # print(i,"> W_rollout:", self.child[i].get_W_rollout(), "W_value:", self.child[i].get_W_value(), " visit",self.child[i].get_visit())
-            print("Q+u : ", self.child[i].get_Qu(),"   q : ",self.child[i].calc_Q(),"  u : ",self.child[i].calc_u())
-            print("PolicyScore : ",self.child[i].policyScore,"     ValueScore : ", self.child[i].valueScore)
+            print("Q+u : ", self.child[i].get_Qu(),"   q : ",self.child[i].calc_Q(),"  u : ",self.child[i].calc_u()," color: ",self.child[i].get_Color())
+            print("PolicyScore : ",self.child[i].policyScore,"     ValueScore : ", self.child[i].get_valueScore(), "   SumValueScore: ",self.child[i].get_sumValueScore())
             print("SumOfGameResult: ",self.child[i].get_SumGameResult())
             print("move : ", self.child[i].get_Command(),"      visit: ",self.child[i].get_visit())
-            print("visit: ",self.child[i].get_visit())
             print("-----------------------------------")
 
     def trans_result(self, result):
