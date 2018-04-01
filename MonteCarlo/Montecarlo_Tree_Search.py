@@ -5,6 +5,7 @@ import chess
 import threading
 import Support.MyLogger as MYLOGGER
 import time
+from Support.Search import  BFS
 
 class MontecarloTreeSearch():
     def __init__(self,path, searchRepeatNum=1000, searchDepth = 30, expandPoint=1000):
@@ -101,7 +102,8 @@ class MontecarloTreeSearch():
         rootNode = self.tree.get_RootNode()
         index = rootNode.get_maxVisitedChildIndex()
         self.tree.root_Node.print_childInfo()
-
+        bfs = BFS()
+        bfs.search(rootNode)
         return rootNode.child[index].command
     def getNetwork(self):
         self.tree.getNetwork()

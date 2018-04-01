@@ -1,5 +1,6 @@
 import math
 import random
+import Support.MyLogger as MYLOGGER
 
 Cpuct = 5
 class Node:
@@ -123,10 +124,10 @@ class Node:
     def calc_Q(self):
         #Q(s,a) = sum(V(s')) / N(s,a)
         if self.color == False: #흑일때 -부호 붙여서 계산
-            value = -self.sumValueScore
+            value = -self.valueScore
             gameResult = - self.sumGameResult
         else:
-            value = self.sumValueScore
+            value = self.valueScore
             gameResult = self.sumGameResult
         visit = self.visit+1
         q =self.lamda * (gameResult / visit) +(1-self.lamda)*(value / visit)
@@ -144,11 +145,8 @@ class Node:
             sum += self.child[i].visit
         return sum
     def getParentVisit(self):
-        visit = self.parent.get_visit()
-        if visit == 0:
-            return 1
-        else:
-            return visit
+        visit = self.parent.sum_childVisit()
+        return visit
     def renewForSelection(self):
         # 멀티 프로세싱 사용 시, 다른 노드를 탐색하기 위해
         pass

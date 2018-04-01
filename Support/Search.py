@@ -30,17 +30,26 @@ class BFS:
 
         for child in childList:
             self.preQ.push(child)
-        self.recursion()
+        while self.repeat():
+            pass
 
-    def recursion(self):
-        self.putPreQChildsAtPostQ()
+    def repeat(self):
+        flag = self.putPreQChildsAtPostQ()
+        if flag == False:
+            return False
+        self.printLevel()
         self.changePreQFromPostQ()
+        return True
 
     def putPreQChildsAtPostQ(self):
+        if self.preQ.len() == 0:
+            return False
         for i in range(self.preQ.len()):
             childsOfPreQ = self.preQ.at(i).get_Child()
             for child in childsOfPreQ:
                 self.postQ.push(copy.deepcopy(child))
+        return True
+
     def changePreQFromPostQ(self):
         del self.preQ
         self.preQ = copy.deepcopy(self.postQ)
@@ -48,6 +57,32 @@ class BFS:
     def printLevel(self):
         preQBuffer = self.preQ.getBuffer()
 
+        str = ""
         for child in preQBuffer:
-            str += "command: %s\t"%child.command
+            if child.parent != None:
+                com = child.parent.command
+            else:
+                com = "None"
+            str += format("|P_Command : %s" % com, "25s")
         MYLOGGER.debuglog(str)
+
+        str = ""
+        for child in preQBuffer:
+            str += format("|visit : %d" %child.visit,"25s")
+        MYLOGGER.debuglog(str)
+
+        str = ""
+        for child in preQBuffer:
+            str += format("|policyScore : %f" %child.policyScore,"25s")
+        MYLOGGER.debuglog(str)
+        str = ""
+        for child in preQBuffer:
+            str += format("|valueScore : %f" % child.valueScore, "25s")
+        MYLOGGER.debuglog(str)
+
+        str = ""
+        for child in preQBuffer:
+            str += format("|command: %s" % child.command, "25s")
+        MYLOGGER.debuglog(str)
+
+        MYLOGGER.debuglog("\n")
