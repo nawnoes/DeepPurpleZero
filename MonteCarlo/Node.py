@@ -23,8 +23,6 @@ class Node:
         self.finalChildIndex=0
         self.child=[]
 
-    def __del__(self):
-        None
     def set_FinalChildIndex(self,num):
         self.finalChildIndex = num
     def set_Child(self, child):
@@ -72,7 +70,7 @@ class Node:
         return False
 
     def is_array4096(self):
-        if self.array4096 == None:
+        if self.array4096 is None:
             return False
         else:
             return True

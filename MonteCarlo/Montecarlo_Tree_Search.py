@@ -5,6 +5,7 @@ import chess
 import threading
 import Support.MyLogger as MYLOGGER
 import time
+import gc
 from Support.Search import  BFS
 
 class MontecarloTreeSearch():
@@ -34,7 +35,10 @@ class MontecarloTreeSearch():
             if (endTime-startTime)>30:
                 break
         nextMove = self.getNextMove()
-
+        # print("트리 메모리 해제")
+        # self.tree.del_tree(self.tree.root_Node)
+        # collected = gc.collect()
+        # print(collected)
         return nextMove
 
     def search(self,chessBoard):
@@ -102,8 +106,9 @@ class MontecarloTreeSearch():
         rootNode = self.tree.get_RootNode()
         index = rootNode.get_maxVisitedChildIndex()
         self.tree.root_Node.print_childInfo()
-        bfs = BFS()
-        bfs.search(rootNode)
+        # BFS로 루트 노드로 부터 트리의 상태 확인하기
+        # bfs = BFS()
+        # bfs.search(rootNode)
         return rootNode.child[index].command
     def getNetwork(self):
         self.tree.getNetwork()

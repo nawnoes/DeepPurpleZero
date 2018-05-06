@@ -16,6 +16,7 @@ class DeepPurpleNetwork:
         self.model(is_traing)
         self.global_step = 0
         self.checkpointPath=filePath
+        self.restore()
 
     def model(self, is_traing = True):
         self.X = tf.placeholder(tf.float32, [None, 8, 8, 35], name="X")  # 체스에서 8X8X10 이미지를 받기 위해 64
@@ -162,7 +163,6 @@ class DeepPurpleNetwork:
         else:
             return tf.nn.batch_normalization(bnInput, populationMean, populationVar, beta, gamma, epsilon)
     def learning(self, input, policylabel, valuelabel):
-        input = self.getInput(input)
         p, l, ve, c, o =self.sess.run([self.P_hypothesis,self.logit, self.valueError, self.cost, self.optimizer], feed_dict={self.X: input, self.Y: policylabel, self.Z: valuelabel})
         self.saveCheckpoint(self.checkpointPath,1)
         return p,l,ve,c
@@ -204,7 +204,7 @@ class DeepPurpleNetwork:
         return array4096, argmaxOfSoftmax, value[0][0]
     def saveCheckpoint(self, filePath, batch_size):
         self.global_step += batch_size
-        self.saver.save(self.sess, filePath+"path", global_step=self.global_step)
+        self.saver.save(self.sess, filePath, global_step=self.global_step)
     def getArraysOfPolicyNetwork(self,chessBoard):
         input = self.getInput(chessBoard)
         array4096 = self.getPolicy(input)

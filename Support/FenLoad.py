@@ -190,13 +190,13 @@ class FenLoad:
         result = self.convertResultForTanh(result)
         if turn == False:
             if result == 1:
-                return -1
+                return [-1]
             elif result == -1:
-                return 1
+                return [1]
             else:
-                return result
+                return [result]
         else:
-            return result
+            return [ result]
     def convertOutput(self,output):
         #들어온 output을 One hot으로 변경해서 반환
 

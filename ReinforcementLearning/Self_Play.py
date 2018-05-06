@@ -13,15 +13,15 @@ class Play:
         g1 = tf.Graph()
         g2 = tf.Graph()
         g3 = tf.Graph()
-        postCheckpointPath = '../Checkpoint/PostCheckpoint/'
-        preCheckpointPath = '../Checkpoint/PreCheckpoint/'
+        postCheckpointPath = '../Checkpoint/Post/'
+        preCheckpointPath = '../Checkpoint/Pre/'
         trainCheckpointPath = postCheckpointPath
         with g1.as_default():
             self.postAI = AI.ChessAI(postCheckpointPath)
         with g2.as_default():
             self.preAI = AI.ChessAI(preCheckpointPath)
         with g3.as_default(): #강화학습을 위한
-            self.trainNetwork = DPN(trainCheckpointPath)
+            self.trainNetwork = DPN(trainCheckpointPath,is_traing=True)
 
         self.loadFenData= FL.FenLoad()
 
@@ -56,9 +56,9 @@ class Play:
         # for i in range(2):
         #     self.currentPolicy.reinforcementLearning(input[i],output[i],result[i])
         if turn:  # turn이 True일때 백 학습
-            self.trainNetwork.reinforcementLearning(input[0], output[0], result[0])
+            self.trainNetwork.learning(input[0], output[0], result[0])
         else:  # 흑 학습
-            self.trainNetwork.reinforcementLearning(input[1], output[1], result[1])
+            self.trainNetwork.learning(input[1], output[1], result[1])
 
     def resettingPastPolicy(self):
         postPolicyFilePath = self.postAI.getNetwork().getFilePath()
@@ -77,14 +77,16 @@ class Play:
     def playChessForReinforcementLearning(self, num):
         # 펜데이터로 경기가 끝날때 까지 진행
         chessBoard = chess.Board()
+        turn=None
 
         if num % 2 == 0:
             white = self.preAI
             black = self.postAI
+            turn=False
         else:
             white = self.postAI
             black = self.preAI
-
+            turn =True
         gameCount = 0
 
         while not chessBoard.is_game_over():
@@ -125,7 +127,7 @@ class Play:
 
         # 게임이 끝났을 때 체스 데이터를 저장
         fenDatas = self.saveRLData(chessBoard, result)
-        # self.reinforcementLearning(fenDatas)
+        self.reinforcementLearning(fenDatas,turn)
 
     def fixResult(self, turn, result):
         if result == "1/2-1/2":
@@ -149,6 +151,6 @@ if __name__ == '__main__':
         for y in range(10):
             sp.playChessForReinforcementLearning(count)
             count += 1
-        with open('Self-PlayResult.txt', 'a') as f:
+        with open('../File/Self-PlayResult.txt', 'a') as f:
             f.write("-----------ResettingPastPolicy------------\n")
         sp.resettingPastPolicy()

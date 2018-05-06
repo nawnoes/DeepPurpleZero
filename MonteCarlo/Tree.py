@@ -4,7 +4,7 @@ from NeuralNetwork.ResNet import DeepPurpleNetwork as DPN
 from Support.OneHotEncoding import OneHotEncode as OHE
 import chess
 import Support.MyLogger as MYLOGGER
-
+import gc
 class Tree:
 
     def __init__(self,path): # 체스보드의 현재 상태를 입력받아 board_stack에 전달
@@ -29,6 +29,19 @@ class Tree:
         except :
             self.reset_board(self.board_stack.get_ChessBoard())
             print("상속 실패")
+    def del_Node(self):
+        del self.root_Node
+        del self.currentNode
+        collected = gc.collect()
+        print(collected)
+    def del_tree(self,node):
+        curNode = node
+        childList = curNode.get_Child()
+
+        for child in childList:
+            self.del_tree(child)
+        del curNode
+
     def set_RootNode(self):
         self.root_Node = Node.Node(None,None,0,self.board_stack.get_Color()) # 루트 노드 생성
         self.currentNode = self.root_Node #루트노드가 생성될 때 currentNode로 설정
@@ -150,7 +163,7 @@ class Tree:
         argmaxOfSoftmax = self.currentNode.get_argmaxOfSoftmax()
         array4096 = self.currentNode.get_array4096()
         color = self.currentNode.get_Color()
-        numOfLegalMoves =len(self.board_stack.get_ChessBoard().legal_moves)
+        numOfLegalMoves = self.board_stack.get_ChessBoard().legal_moves.count()
         numOfChild = self.currentNode.get_LengthOfChild()
         finalIndex = self.currentNode.get_FinalChildIndex()
 
