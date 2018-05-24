@@ -7,11 +7,11 @@ import Support.MyLogger as MYLOGGER
 import gc
 class Tree:
 
-    def __init__(self,path): # 체스보드의 현재 상태를 입력받아 board_stack에 전달
+    def __init__(self,dpn): # 체스보드의 현재 상태를 입력받아 board_stack에 전달
         self.root_Node = None
         self.currentNode = None#현재 가리키는 노드를 임시로 저장
         self.board_stack = None #MCTS에서 각노드의 명령어를 사용할 Board_Stack
-        self.deepPurpleNetwork = DPN(path,is_traing=False)
+        self.deepPurpleNetwork = dpn
         self.ohe = OHE()
         self.thresholdOfPolicyNetwork = 0.01
 
@@ -34,14 +34,9 @@ class Tree:
         del self.currentNode
         collected = gc.collect()
         print(collected)
-    def del_tree(self,node):
-        curNode = node
-        childList = curNode.get_Child()
-
-        for child in childList:
-            self.del_tree(child)
-        del curNode
-
+    def del_tree(self):
+        self.root_Node=None
+        self.currentNode =None
     def set_RootNode(self):
         self.root_Node = Node.Node(None,None,0,self.board_stack.get_Color()) # 루트 노드 생성
         self.currentNode = self.root_Node #루트노드가 생성될 때 currentNode로 설정

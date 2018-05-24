@@ -1,6 +1,7 @@
 import math
 import random
 import Support.MyLogger as MYLOGGER
+import weakref
 
 Cpuct = 5
 class Node:
@@ -14,7 +15,6 @@ class Node:
         self.valueScore = 0
         self.sumValueScore = 0
         self.sumGameResult = 0
-        self.parent = parent  # 부모노드
         self.array4096 =None
         self.argmaxOfSoftmax = None
         self.bear_Flag = False
@@ -22,6 +22,10 @@ class Node:
         self.n_vl = 0#3 나중에 멀티 프로세싱으로 여러개의 스레드가 트리를 생성할 때 사용
         self.finalChildIndex=0
         self.child=[]
+        self.parent=parent
+
+    def __del__(self):
+        print(f'{id(self):x} is being destroyed.')
 
     def set_FinalChildIndex(self,num):
         self.finalChildIndex = num
@@ -111,7 +115,7 @@ class Node:
     def add_ChildNode(self, node):
         if self.bear_Flag == False:
             self.on_Flag()
-        self.child.append(node)
+        self.child.append(weakref.proxy(node))
     def get_Qu(self):
         #win/games + C_puct * policy_Score * ( root( sigma(other child visit) / ( 1 + my visit ) )
         if self.parent ==None:
@@ -215,7 +219,7 @@ class Node:
                 index = i
         return index
     def is_root(self):
-        if self.parent:
+        if self.parent is not None:
             return False
         else:
             return True

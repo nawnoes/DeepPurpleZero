@@ -26,7 +26,9 @@ class ChessAI :
         self.decision = self.monte.predict()
 
     def get_MCTS(self,chessBoard):
+
         nextMove = self.mcts.MCTS(chessBoard)
+
         return nextMove
     def getNetwork(self):
         return self.mcts.getNetwork

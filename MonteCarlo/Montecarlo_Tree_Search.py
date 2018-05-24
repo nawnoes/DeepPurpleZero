@@ -5,12 +5,14 @@ import chess
 import threading
 import Support.MyLogger as MYLOGGER
 import time
+from NeuralNetwork.ResNet import DeepPurpleNetwork as DPN
 import gc
 from Support.Search import  BFS
 
 class MontecarloTreeSearch():
     def __init__(self,path, searchRepeatNum=1000, searchDepth = 30, expandPoint=1000):
-        self.tree = TR.Tree(path)
+        self.dpn=DPN(path,is_traing=False)
+        self.tree = TR.Tree(self.dpn)
         self.searchDepth = searchDepth
         self.expandPoint = expandPoint
         self.searchRepeatNum = searchRepeatNum
@@ -18,6 +20,9 @@ class MontecarloTreeSearch():
 
     def set_state(self,Board):
         self.tree.reset_board(Board)
+    def renew_tree(self):
+        del self.tree
+        self.tree = TR.Tree(self.dpn)
 
     def MCTS(self,chessBoard):
         #몬테카를로 트리탐색을 통해 값을 얻기 전에
@@ -35,8 +40,8 @@ class MontecarloTreeSearch():
             if (endTime-startTime)>30:
                 break
         nextMove = self.getNextMove()
-        # print("트리 메모리 해제")
-        # self.tree.del_tree(self.tree.root_Node)
+        print("트리 메모리 해제")
+        self.tree.del_tree()
         # collected = gc.collect()
         # print(collected)
         return nextMove
