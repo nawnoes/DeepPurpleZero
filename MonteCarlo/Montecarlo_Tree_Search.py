@@ -42,8 +42,6 @@ class MontecarloTreeSearch():
         nextMove = self.getNextMove()
         print("트리 메모리 해제")
         self.tree.del_tree()
-        # collected = gc.collect()
-        # print(collected)
         return nextMove
 
     def search(self,chessBoard):

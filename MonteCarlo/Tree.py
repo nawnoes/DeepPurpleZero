@@ -37,6 +37,13 @@ class Tree:
     def del_tree(self):
         self.root_Node=None
         self.currentNode =None
+        collected = gc.collect()
+        print(collected)
+    def recursive_del_tree(self,node):
+        childList = node.get_Child()
+        for child in childList:
+            self.recursive_del_tree(child)
+        node.set_NoneChild()
     def set_RootNode(self):
         self.root_Node = Node.Node(None,None,0,self.board_stack.get_Color()) # 루트 노드 생성
         self.currentNode = self.root_Node #루트노드가 생성될 때 currentNode로 설정
@@ -68,10 +75,6 @@ class Tree:
             return value
         else:
             return self.currentNode.get_valueScore()
-
-    def makeNextChildWithNNComputingEverytime(self):
-        pass
-    # policy
     def makeNextChild(self):
 
         if not self.currentNode.is_array4096():

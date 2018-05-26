@@ -23,15 +23,20 @@ class Node:
         self.finalChildIndex=0
         self.child=[]
         self.parent=parent
+        if parent is None:
+            self.parent =None
+        else:
+            self.parent = weakref.proxy(parent)
 
     def __del__(self):
-        print(f'{id(self):x} is being destroyed.')
-
+        self.child=None
     def set_FinalChildIndex(self,num):
         self.finalChildIndex = num
     def set_Child(self, child):
         self.on_Flag()
         self.child = child
+    def set_NoneChild(self):
+        self.child=None
     def set_Color(self,color):
         self.color = color
     def set_array4096(self,array4096):
@@ -115,7 +120,8 @@ class Node:
     def add_ChildNode(self, node):
         if self.bear_Flag == False:
             self.on_Flag()
-        self.child.append(weakref.proxy(node))
+        # self.child.append(weakref.proxy(node))
+        self.child.append(node)
     def get_Qu(self):
         #win/games + C_puct * policy_Score * ( root( sigma(other child visit) / ( 1 + my visit ) )
         if self.parent ==None:
