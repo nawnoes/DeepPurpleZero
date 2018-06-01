@@ -111,7 +111,7 @@ class DeepPurpleNetwork:
         V_FlatLayer = tf.reshape(V_L, [-1, 8 * 8 * 128])
         V_Flat_W = tf.get_variable("V_Flat_W", shape=[8 * 8 * 128, 1],initializer=tf.contrib.layers.xavier_initializer())
         V_Flat_W_Regulization = tf.nn.l2_loss(V_Flat_W)
-        V_Flat_B = tf.get_variable("V_Flat_B", initializer=tf.random_normal([1], stddev=0.01))
+        # V_Flat_B = tf.get_variable("V_Flat_B", initializer=tf.random_normal([1], stddev=0.01))
         self.V_hypothesis = tf.tanh(tf.matmul(V_FlatLayer, V_Flat_W))
 
 
@@ -177,25 +177,31 @@ class DeepPurpleNetwork:
         if self.ckpt and self.ckpt.model_checkpoint_path:
             self.global_step = int(self.ckpt.model_checkpoint_path.rsplit('-', 1)[1])
             self.saver.restore(self.sess, self.ckpt.model_checkpoint_path)
-            print("Checkpoint Path: ", self.ckpt.model_checkpoint_path)
-            print("Checkpoint 로딩 완료")
+            print("Checkpoint load success. Path: ", self.ckpt.model_checkpoint_path)
         else:
-            print("Checkpoint 로딩 실패")
+            print("Checkpoint load fail")
     def getInput(self, chessBoard):
         #여러 값을 구할 때 input을 구하는 호출을 많이 사용하므로 수정 필요.
         input = []
         # input.append(B2A().board2arrayFor41Feature(chessBoard.getChessBoard(), chessBoard.getPremoves()))
         input.append(B2A.Board2Array().board2array(chessBoard))
         return input
-    def getPolicy(self,input):
+    def getPolicy(self,chessBoard):
         # softmaxOfPolicy = tf.nn.softmax(self.P_hypothesis)
-        input = self.getInput(input)
-        return self.sess.run(self.P_hypothesis, feed_dict={self.X: input})
-    def getValue(self,input):
-        input = self.getInput(input)
-        return self.sess.run(self.V_hypothesis, feed_dict={self.X: input})
+        input = []
+        input.append( B2A.Board2Array().board2array(chessBoard))
+        ret=self.sess.run(self.P_hypothesis, feed_dict={self.X: input})
+        del input
+        return ret
+    def getValue(self,chessBoard):
+        input = []
+        input.append(B2A.Board2Array().board2array(chessBoard))
+        ret = self.sess.run(self.V_hypothesis, feed_dict={self.X: input})
+        del input
+        return ret
     def getPolicyAndValue(self,chessBoard):
-        input = self.getInput(chessBoard)
+        input = []
+        input.append(B2A.Board2Array().board2array(chessBoard))
         softmaxOfPolicy = tf.nn.softmax(self.P_hypothesis)
         policy, value = self.sess.run([softmaxOfPolicy,self.V_hypothesis], feed_dict={self.X:input})
         array4096 = policy

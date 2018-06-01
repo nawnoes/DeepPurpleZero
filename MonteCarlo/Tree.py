@@ -5,19 +5,28 @@ from Support.OneHotEncoding import OneHotEncode as OHE
 import chess
 import Support.MyLogger as MYLOGGER
 import gc
+from NeuralNetwork.ResNet import DeepPurpleNetwork as DPN
+import tensorflow as tf
 class Tree:
 
-    def __init__(self,dpn): # 체스보드의 현재 상태를 입력받아 board_stack에 전달
+    def __init__(self,path): # 체스보드의 현재 상태를 입력받아 board_stack에 전달
         self.root_Node = None
         self.currentNode = None#현재 가리키는 노드를 임시로 저장
         self.board_stack = None #MCTS에서 각노드의 명령어를 사용할 Board_Stack
-        self.deepPurpleNetwork = dpn
+        self.path = path
+        self.deepPurpleNetwork =None
         self.ohe = OHE()
         self.thresholdOfPolicyNetwork = 0.01
+
+
+    def __del__(self):
+        self.del_tree()
+        print("Tree was destroyed")
 
     def reset_board(self,Board):
         self.board_stack = BS.Board_Stack(Board)
         self.set_RootNode()
+        self.set_ResNet()
     def inherit_tree(self, move):
         child = self.root_Node.find_move(move)
         self.board_stack.stack_push(move)
@@ -29,24 +38,21 @@ class Tree:
         except :
             self.reset_board(self.board_stack.get_ChessBoard())
             print("상속 실패")
-    def del_Node(self):
-        del self.root_Node
-        del self.currentNode
-        collected = gc.collect()
-        print(collected)
-    def del_tree(self):
-        self.root_Node=None
-        self.currentNode =None
-        collected = gc.collect()
-        print(collected)
     def recursive_del_tree(self,node):
         childList = node.get_Child()
         for child in childList:
             self.recursive_del_tree(child)
         node.set_NoneChild()
+    def del_tree(self):
+        self.root_Node=None
+        self.currentNode=None
+        self.board_stack=None
     def set_RootNode(self):
         self.root_Node = Node.Node(None,None,0,self.board_stack.get_Color()) # 루트 노드 생성
         self.currentNode = self.root_Node #루트노드가 생성될 때 currentNode로 설정
+    def set_ResNet(self):
+        with tf.Graph().as_default():
+            self.deepPurpleNetwork = DPN(self.path,is_traing=False)
     def go_root(self,Board):
         self.currentNode = self.root_Node
         del self.board_stack

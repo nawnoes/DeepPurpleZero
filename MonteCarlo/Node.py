@@ -6,6 +6,8 @@ import weakref
 Cpuct = 5
 class Node:
 
+    numOfNodes=0
+
 
     def __init__(self, parent = None, command=None, policy_Score = 0, color = None): # 부모로 부터 파생 될때, 부모노드의 정보와 커맨드를 부여받음
         self.command = command  # 명령어
@@ -22,14 +24,17 @@ class Node:
         self.n_vl = 0#3 나중에 멀티 프로세싱으로 여러개의 스레드가 트리를 생성할 때 사용
         self.finalChildIndex=0
         self.child=[]
-        self.parent=parent
         if parent is None:
             self.parent =None
         else:
             self.parent = weakref.proxy(parent)
-
+        Node.numOfNodes +=1
     def __del__(self):
-        self.child=None
+        self.child.clear()
+        self.parent=None
+        self.array4096=None
+        self.argmaxOfSoftmax=None
+        Node.numOfNodes-=1
     def set_FinalChildIndex(self,num):
         self.finalChildIndex = num
     def set_Child(self, child):

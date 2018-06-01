@@ -1,6 +1,7 @@
 import MonteCarlo.Tree as TR
 # from MonteCarlo.NeuralNetwork import ValueNetwork as VN
 # from MonteCarlo.NeuralNetwork import Rollout as RO
+from MonteCarlo.Node import Node
 import chess
 import threading
 import Support.MyLogger as MYLOGGER
@@ -8,11 +9,12 @@ import time
 from NeuralNetwork.ResNet import DeepPurpleNetwork as DPN
 import gc
 from Support.Search import  BFS
+import objgraph
 
 class MontecarloTreeSearch():
-    def __init__(self,path, searchRepeatNum=1000, searchDepth = 30, expandPoint=1000):
-        self.dpn=DPN(path,is_traing=False)
-        self.tree = TR.Tree(self.dpn)
+    def __init__(self,path, searchRepeatNum=1000, searchDepth = 150, expandPoint=1000):
+        self.path = path
+        self.tree = None
         self.searchDepth = searchDepth
         self.expandPoint = expandPoint
         self.searchRepeatNum = searchRepeatNum
@@ -28,9 +30,13 @@ class MontecarloTreeSearch():
         #몬테카를로 트리탐색을 통해 값을 얻기 전에
         #기존에 저장된 트리를 리셋해야함
         #추후에 트리 상속으로 개선
+        self.tree= TR.Tree(self.path)
         self.tree.reset_board(chessBoard)
         # print("몬테카를로 Search 시작")
+        print("몬테카를로 전 노드 개수: ", Node.numOfNodes)
         startTime = time.time()
+
+
         for i in range(self.searchRepeatNum):
             if i % 10 == 0:
                 print("\r%d" % i , end="")
@@ -40,8 +46,10 @@ class MontecarloTreeSearch():
             if (endTime-startTime)>30:
                 break
         nextMove = self.getNextMove()
-        print("트리 메모리 해제")
-        self.tree.del_tree()
+        print("몬테카를로 후 노드 개수: ", Node.numOfNodes)
+        gc.collect()
+        self.tree = None
+
         return nextMove
 
     def search(self,chessBoard):

@@ -2,6 +2,7 @@ import weakref
 import copy
 import sys
 import numpy
+import objgraph
 
 class Node:
     def __init__(self,num):
@@ -20,23 +21,26 @@ if __name__ == '__main__':
     n2 = Node(2)
     n3 = Node(3)
     n4=Node(4)
+    objgraph.show_most_common_types()
+
 
     print('n1 rc = ', sys.getrefcount(n1))
     # n1.c.append(weakref.proxy(n2))
     # n1.c.append(weakref.proxy(n3))
-    # n1.c.append(Node(5))
+    n1.c.append(n2)
+    n1.c.append(n3)
     # n1.c[0]=n2
-    b=n2
-    n1.c.append(b)
-    n2.p = weakref.proxy(n1)
-    n3.p = weakref.proxy(n1)
+    # b=n2
+    # n1.c.append(b)
+    # n2.p = weakref.proxy(n1)
+    # n3.p = weakref.proxy(n1)
     # n2.p = n1
     # n3.p =n1
+    n1.c=None
     print('n1 rc = ',sys.getrefcount(n1))
     print('n2 rc = ' , sys.getrefcount(n2))
     print('n3 rc = ' , sys.getrefcount(n3))
-    b= weakref.proxy(n1)
-    b.nPrint()
+
 
     # print(a)
     # for i in range(5,1000000):
@@ -48,6 +52,8 @@ if __name__ == '__main__':
 
     print('n1 rc = ', sys.getrefcount(n1))
 
+    print('n2 rc = ' , sys.getrefcount(n2))
+    print('n3 rc = ' , sys.getrefcount(n3))
     print(n2)
     print(n3)
 

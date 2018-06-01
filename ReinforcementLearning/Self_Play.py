@@ -6,21 +6,19 @@ import Support.FenLoad as FL
 import os
 import shutil
 import tensorflow as tf
+import objgraph
 # import ChessBoard
 
 class Play:
     def __init__(self):
-        g1 = tf.Graph()
-        g2 = tf.Graph()
-        g3 = tf.Graph()
+
+        g = tf.Graph()
         postCheckpointPath = '../Checkpoint/Post/'
         preCheckpointPath = '../Checkpoint/Pre/'
         trainCheckpointPath = postCheckpointPath
-        with g1.as_default():
-            self.postAI = AI.ChessAI(postCheckpointPath)
-        with g2.as_default():
-            self.preAI = AI.ChessAI(preCheckpointPath)
-        with g3.as_default(): #강화학습을 위한
+        self.postAI = AI.ChessAI(postCheckpointPath)
+        self.preAI = AI.ChessAI(preCheckpointPath)
+        with g.as_default(): #강화학습을 위한
             self.trainNetwork = DPN(trainCheckpointPath,is_traing=True)
 
         self.loadFenData= FL.FenLoad()
@@ -88,8 +86,11 @@ class Play:
             black = self.preAI
             turn =True
         gameCount = 0
+        # for i in range(1000000000):
+        #     pass
 
         while not chessBoard.is_game_over():
+            objgraph.show_most_common_types()
             if gameCount >1000:
                 break
             print("---------------")
