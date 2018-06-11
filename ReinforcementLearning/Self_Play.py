@@ -22,6 +22,8 @@ class Play:
             self.trainNetwork = DPN(trainCheckpointPath,is_traing=True)
 
         self.loadFenData= FL.FenLoad()
+    def __del__(self):
+        print("")
 
     def saveRLData(self, chessBoard, result):
         # 파일 경로에 주어진 data를 저장
@@ -145,13 +147,15 @@ class Play:
                 return "RL_Policy Win!"
 
 if __name__ == '__main__':
-    sp = Play()
+
 
     count = 0
     for x in range(200):
         for y in range(10):
+            sp = Play()
             sp.playChessForReinforcementLearning(count)
             count += 1
+            del sp
         with open('../File/Self-PlayResult.txt', 'a') as f:
             f.write("-----------ResettingPastPolicy------------\n")
         sp.resettingPastPolicy()

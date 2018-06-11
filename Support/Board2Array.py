@@ -7,6 +7,8 @@
 
 import numpy as np
 import chess
+from numba import jitclass,jit
+
 
 class Board2Array:
 
@@ -128,11 +130,13 @@ class Board2Array:
     def square(self):
         #칸 고유의 특성을 1로 설정
         #아마 제로패딩시 사용될거라 추측
-        feature = [[1] * 8 for i in range(8)]
+        # feature = [[1] * 8 for i in range(8)]
+        feature = np.ones((8,8))
         return feature
 
     def white(self,chessBoard , chessStr):
-        feature= [[0] * 8 for i in range(8)]
+        # feature= [[0] * 8 for i in range(8)]
+        feature=np.zeros((8,8))
         k=0
         for i in range(8):
             for j in range(8):
@@ -142,7 +146,8 @@ class Board2Array:
         # print(feature)
         return feature
     def black(self,chessBoard , chessStr):
-        feature= [[0] * 8 for i in range(8)]
+        # feature= [[0] * 8 for i in range(8)]
+        feature = np.zeros((8, 8))
         k=0
         for i in range(8):
             for j in range(8):
@@ -152,7 +157,8 @@ class Board2Array:
         # print(feature)
         return feature
     def piece(self,chessBoard , chessStr, piece):
-        feature= [[0] * 8 for i in range(8)]
+        # feature= [[0] * 8 for i in range(8)]
+        feature = np.zeros((8, 8))
         k=0
         for i in range(8):
             for j in range(8):
@@ -164,7 +170,8 @@ class Board2Array:
 
     def slidingPiece(self, chessBoard, chessStr, piece):
         #5월20일에 수정됨
-        feature = [[0] * 8 for i in range(8)]
+        # feature = [[0] * 8 for i in range(8)]
+        feature = np.zeros((8, 8))
         pieceIndex = []
         l = 0
         for i in range(8):
@@ -188,7 +195,8 @@ class Board2Array:
         #     print(feature[i])
         return feature
     def pin(self,chessBoard, chessTurn):
-        feature = [[0] * 8 for i in range(8)]
+        # feature = [[0] * 8 for i in range(8)]
+        feature = np.zeros((8, 8))
         k = 0 #이때 k는 chess.SQUARES 순서
         for i in range(8):
             for j in range(8):
@@ -202,7 +210,8 @@ class Board2Array:
         return feature
     def attacked(self,chessBoard, chessTurn):
         # color에 의해 square가 공격받을 수 있는지
-        feature = [[0] * 8 for i in range(8)]
+        # feature = [[0] * 8 for i in range(8)]
+        feature = np.zeros((8, 8))
         k = 0 #이때 k 값은 chess.SQUARES의 의 순서라 아래에서 부터 접근
         for i in range(8):
             for j in range(8):
@@ -214,7 +223,8 @@ class Board2Array:
         return feature
     def check(self,chessBoard, chessStr):
         #주어진 턴의 킹의 상태가 check인지
-        feature = [[0] * 8 for i in range(8)]
+        # feature = [[0] * 8 for i in range(8)]
+        feature = np.zeros((8, 8))
         k = 0
         flag =False
         for i in range(8):
@@ -234,7 +244,8 @@ class Board2Array:
         return feature
     def turn(self,chessBoard):
         #턴이 일치하면 전체가 1, 일치하지 않으면 0 반환
-        feature = [[0] * 8 for i in range(8)]
+        # feature = [[0] * 8 for i in range(8)]
+        feature = np.zeros((8, 8))
         for i in range(8):
             for j in range(8):
                 if chessBoard.turn==True: #백이면 1
@@ -244,8 +255,8 @@ class Board2Array:
         return feature
     def castling(self,chessBoard, chessTurn):
         #주어진 턴에서 캐슬링 경우가 있는지
-        feature = [[0] * 8 for i in range(8)]
-
+        # feature = [[0] * 8 for i in range(8)]
+        feature = np.zeros((8, 8))
         if chessBoard.has_kingside_castling_rights(chessTurn) and chessTurn:
             #현재 체스 턴이 백. 백의 킹사이드 캐슬링
             feature[7][4] = feature[7][7] = 1

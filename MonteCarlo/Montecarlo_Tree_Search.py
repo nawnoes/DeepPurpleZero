@@ -9,16 +9,17 @@ import time
 from NeuralNetwork.ResNet import DeepPurpleNetwork as DPN
 import gc
 from Support.Search import  BFS
-import objgraph
+
 
 class MontecarloTreeSearch():
-    def __init__(self,path, searchRepeatNum=1000, searchDepth = 150, expandPoint=1000):
+    def __init__(self,path, searchRepeatNum=150, searchDepth = 300, expandPoint=1000):
         self.path = path
         self.tree = None
         self.searchDepth = searchDepth
         self.expandPoint = expandPoint
         self.searchRepeatNum = searchRepeatNum
         self.evaluationQueue = []
+        self.LIMIT = 3000
 
     def set_state(self,Board):
         self.tree.reset_board(Board)
@@ -43,7 +44,7 @@ class MontecarloTreeSearch():
             # MYLOGGER.debuglog("---------%d search---------"%i)
             self.search(chessBoard)
             endTime = time.time()
-            if (endTime-startTime)>30:
+            if (endTime-startTime)>self.LIMIT:
                 break
         nextMove = self.getNextMove()
         print("몬테카를로 후 노드 개수: ", Node.numOfNodes)

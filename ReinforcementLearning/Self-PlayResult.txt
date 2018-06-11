@@ -2,3 +2,8 @@ currentPolicy: Black/ Self-Play Result: 1/2-1/2
 currentPolicy: Black/ Self-Play Result: 1/2-1/2
 currentPolicy: Black/ Self-Play Result: 1/2-1/2
 currentPolicy: Black/ Self-Play Result: 0-1
+currentPolicy: White/ Self-Play Result: 1/2-1/2
+currentPolicy: Black/ Self-Play Result: 0-1
+currentPolicy: White/ Self-Play Result: 1/2-1/2
+currentPolicy: Black/ Self-Play Result: 1/2-1/2
+currentPolicy: White/ Self-Play Result: 1/2-1/2
