@@ -7,21 +7,23 @@ import os
 import shutil
 import tensorflow as tf
 import objgraph
+from Support.Record import GameInfo
 # import ChessBoard
 
 class Play:
     def __init__(self):
-
+        self.gameInfo = GameInfo()
         g = tf.Graph()
-        postCheckpointPath = '../Checkpoint/Post/'
-        preCheckpointPath = '../Checkpoint/Pre/'
+        postCheckpointPath = '../Checkpoint/Later/'
+        preCheckpointPath = '../Checkpoint/Former/'
         trainCheckpointPath = postCheckpointPath
-        self.postAI = AI.ChessAI(postCheckpointPath)
-        self.preAI = AI.ChessAI(preCheckpointPath)
-        with g.as_default(): #강화학습을 위한
+        self.LaterAI = AI.ChessAI(postCheckpointPath)
+        self.FormerAI = AI.ChessAI(preCheckpointPath)
+        with g.as_default(): #강화학습을 위한 그래프
             self.trainNetwork = DPN(trainCheckpointPath,is_traing=True)
 
         self.loadFenData= FL.FenLoad()
+        self.gameInfo.load()
     def __del__(self):
         print("")
 
@@ -61,8 +63,8 @@ class Play:
             self.trainNetwork.learning(input[1], output[1], result[1])
 
     def resettingPastPolicy(self):
-        postPolicyFilePath = self.postAI.getNetwork().getFilePath()
-        prePolicyFilePath = self.preAI.getNetwork().getFilePath()
+        postPolicyFilePath = self.LaterAI.getNetwork().getFilePath()
+        prePolicyFilePath = self.FormerAI.getNetwork().getFilePath()
 
         currentPolicyFileLists = os.listdir(postPolicyFilePath)
 
@@ -72,7 +74,7 @@ class Play:
             afterPath = os.path.join(prePolicyFilePath, filename)
             shutil.copy(previousPath, afterPath)
 
-        self.preAI.getNetwork().restoreCheckpoint()
+        self.FormerAI.getNetwork().restoreCheckpoint()
 
     def playChessForReinforcementLearning(self, num):
         # 펜데이터로 경기가 끝날때 까지 진행
@@ -80,12 +82,12 @@ class Play:
         turn=None
 
         if num % 2 == 0:
-            white = self.preAI
-            black = self.postAI
+            white = self.FormerAI
+            black = self.LaterAI
             turn=False
         else:
-            white = self.postAI
-            black = self.preAI
+            white = self.LaterAI
+            black = self.FormerAI
             turn =True
         gameCount = 0
         # for i in range(1000000000):
@@ -119,10 +121,31 @@ class Play:
         else:
             result = chessBoard.result()
 
-        if num % 2 == 0:
-            str = "currentPolicy: Black/ Self-Play Result: " + result
-        else:
-            str = "currentPolicy: White/ Self-Play Result: " + result
+        if num % 2 == 0: #Later 흑, Former 백
+
+            if result =='0-1': #Later Black 승
+               self.gameInfo.info['CurrentLaterBlackWin']+=1
+               self.gameInfo.info['LaterBlackWin']+=1
+               self.gameInfo.info['LaterWin']+=1
+               str = "LaterAi Win, Self-Play Result: " + result
+            elif result =='1-0': #Later Black 패
+                self.gameInfo.info['CurrentFormerWhiteWin'] += 1
+                self.gameInfo.info['FormerWhiteWin']+=1
+                self.gameInfo.info['FormerWin']+=1
+                str = "LaterAi Lose, Self-Play Result: " + result
+        else: # Later 백, Former 흑
+            if result == '1-0':  # Later White 승
+                self.gameInfo.info['CurrentLaterWhiteWin'] += 1
+                self.gameInfo.info['LaterWhiteWin']+=1
+                self.gameInfo.info['LaterWin']+=1
+                str = "LaterAi Win, Self-Play Result: " + result
+            elif result =='0-1': # Later White 패
+                self.gameInfo.info['CurrentFormerBlackWin'] +=1
+                self.gameInfo.info['FormerBlackWin']+1
+                self.gameInfo.info['FormerWin']+=1
+                str = "LaterAi Lose, Self-Play Result: " + result
+        self.gameInfo.info['GameCount']+=1
+        self.gameInfo.info['CurrentGameCount']+=1
         print(str)
 
         with open('Self-PlayResult.txt', 'a') as f:
@@ -131,6 +154,11 @@ class Play:
         # 게임이 끝났을 때 체스 데이터를 저장
         fenDatas = self.saveRLData(chessBoard, result)
         self.reinforcementLearning(fenDatas,turn)
+
+        #Game Info를 Json으로 저장
+        self.gameInfo.save()
+        isChange = self.gameInfo.is_ChangeCheckpoint()
+        return isChange
 
     def fixResult(self, turn, result):
         if result == "1/2-1/2":
@@ -150,12 +178,25 @@ if __name__ == '__main__':
 
 
     count = 0
-    for x in range(200):
-        for y in range(10):
-            sp = Play()
-            sp.playChessForReinforcementLearning(count)
-            count += 1
-            del sp
+    # for x in range(200):
+    #     for y in range(10):
+    #         sp = Play()
+    #         sp.playChessForReinforcementLearning(count)
+    #         count += 1
+    #         del sp
+    #     with open('../File/Self-PlayResult.txt', 'a') as f:
+    #         f.write("-----------ResettingPastPolicy------------\n")
+    #     sp.resettingPastPolicy()
+    while True:
+        sp = Play()
+        isChange = sp.playChessForReinforcementLearning(count)
+        count +=1
+
+        if isChange:
+            sp.resettingPastPolicy()
+            sp.gameInfo.upRotaionCount()
+
+        del sp
+
         with open('../File/Self-PlayResult.txt', 'a') as f:
-            f.write("-----------ResettingPastPolicy------------\n")
-        sp.resettingPastPolicy()
+            f.write("-----------Change Checkpoint------------\n")

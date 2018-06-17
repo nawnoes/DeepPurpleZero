@@ -25,5 +25,9 @@ print("from json to dictionary")
 
 dict2 = json.loads(dicToJson)
 
+j1['age'] += 1
+
+print(j1['age'])
+
 print(dict2)
 print(type(dict2))

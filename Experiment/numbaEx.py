@@ -10,7 +10,7 @@ from ReinforcementLearning.ChessAI import ChessAI
 @jit
 def get_JITinput(chessBoard):
     start = time.time()
-    # ca = ChessAI('../Checkpoint/Post/')
+    # ca = ChessAI('../Checkpoint/Later/')
     # ca.get_MCTS(chessBoard)
     b2a=B2A()
     b2a.board2array(chessBoard)
@@ -21,7 +21,7 @@ def get_JITinput(chessBoard):
     return elapsed
 def get_input(chessBoard):
     start = time.time()
-    # ca = ChessAI('../Checkpoint/Post/')
+    # ca = ChessAI('../Checkpoint/Later/')
     # ca.get_MCTS(chessBoard)
     b2a = B2A()
     b2a.board2array(chessBoard)
