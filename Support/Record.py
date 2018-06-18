@@ -20,7 +20,7 @@ class GameInfo:
             'CurrentFormerBlackWin' : 0,
             'CurrentFormerWhiteWin' : 0
         }
-        self.savePath="./Data/Self-Play_info.json"
+        self.savePath="../Data/Self-Play_info.json"
 
     def load(self):
         try:
