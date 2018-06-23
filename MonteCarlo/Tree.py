@@ -167,7 +167,7 @@ class Tree:
         argmaxOfSoftmax = self.currentNode.get_argmaxOfSoftmax()
         array4096 = self.currentNode.get_array4096()
         color = self.currentNode.get_Color()
-        numOfLegalMoves = self.board_stack.get_ChessBoard().legal_moves.count()
+        numOfLegalMoves = len(self.board_stack.get_ChessBoard().legal_moves)
         numOfChild = self.currentNode.get_LengthOfChild()
         finalIndex = self.currentNode.get_FinalChildIndex()
 

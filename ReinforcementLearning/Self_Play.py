@@ -24,6 +24,7 @@ class Play:
 
         self.loadFenData= FL.FenLoad()
         self.gameInfo.load()
+        self.LIMITofCOUNT = 1
     def __del__(self):
         print("")
 
@@ -95,7 +96,11 @@ class Play:
 
         while not chessBoard.is_game_over():
             objgraph.show_most_common_types()
-            if gameCount >1000:
+
+
+            print(self.gameInfo.info)
+            print(type(self.gameInfo.info))
+            if gameCount >self.LIMITofCOUNT:
                 break
             print("---------------")
             if chessBoard.turn:
@@ -116,7 +121,7 @@ class Play:
             chessBoard.push(chess.Move.from_uci(move))
             gameCount += 1
 
-        if gameCount>1000:
+        if gameCount>self.LIMITofCOUNT:
             result = '1/2-1/2'
         else:
             result = chessBoard.result()
@@ -133,6 +138,8 @@ class Play:
                 self.gameInfo.info['FormerWhiteWin']+=1
                 self.gameInfo.info['FormerWin']+=1
                 str = "LaterAi Lose, Self-Play Result: " + result
+            else:
+                str = "LaterAi Draw, Self-Play Result: " + result
         else: # Later 백, Former 흑
             if result == '1-0':  # Later White 승
                 self.gameInfo.info['CurrentLaterWhiteWin'] += 1
@@ -141,11 +148,14 @@ class Play:
                 str = "LaterAi Win, Self-Play Result: " + result
             elif result =='0-1': # Later White 패
                 self.gameInfo.info['CurrentFormerBlackWin'] +=1
-                self.gameInfo.info['FormerBlackWin']+1
+                self.gameInfo.info['FormerBlackWin']+=1
                 self.gameInfo.info['FormerWin']+=1
                 str = "LaterAi Lose, Self-Play Result: " + result
-        self.gameInfo.info['GameCount']+=1
+            else:
+                str = "LaterAi Lose, Self-Play Result: " + result
+
         self.gameInfo.info['CurrentGameCount']+=1
+        self.gameInfo.info['GameCount']+=1
         print(str)
 
         with open('Self-PlayResult.txt', 'a') as f:
@@ -195,8 +205,6 @@ if __name__ == '__main__':
         if isChange:
             sp.resettingPastPolicy()
             sp.gameInfo.upRotaionCount()
-
+            with open('../File/Self-PlayResult.txt', 'a') as f:
+                f.write("-----------Change Checkpoint------------\n")
         del sp
-
-        with open('../File/Self-PlayResult.txt', 'a') as f:
-            f.write("-----------Change Checkpoint------------\n")

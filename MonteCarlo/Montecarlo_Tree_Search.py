@@ -19,7 +19,7 @@ class MontecarloTreeSearch():
         self.expandPoint = expandPoint
         self.searchRepeatNum = searchRepeatNum
         self.evaluationQueue = []
-        self.LIMIT = 3000 #최대 LIMIT 초 동안 트리탐색
+        self.LIMIT = 300 #최대 LIMIT 초 동안 트리탐색
 
     def set_state(self,Board):
         self.tree.reset_board(Board)

@@ -210,6 +210,7 @@ class DeepPurpleNetwork:
         return array4096, argmaxOfSoftmax, value[0][0]
     def saveCheckpoint(self, filePath, batch_size):
         self.global_step += batch_size
+        filePath += 'path'
         self.saver.save(self.sess, filePath, global_step=self.global_step)
     def getArraysOfPolicyNetwork(self,chessBoard):
         input = self.getInput(chessBoard)
