@@ -12,7 +12,7 @@ from Support.Search import  BFS
 
 
 class MontecarloTreeSearch():
-    def __init__(self,path, searchRepeatNum=150, searchDepth = 300, expandPoint=1000):
+    def __init__(self,path, searchRepeatNum=150, searchDepth = 400, expandPoint=1000):
         self.path = path
         self.tree = None
         self.searchDepth = searchDepth
@@ -61,7 +61,7 @@ class MontecarloTreeSearch():
         selectionResult = False
         while not( gameOver or selectionResult or depth>self.searchDepth):
             selectionResult = self.selection(depth)
-            depth +=1
+            depth += 1
             gameOver = self.tree.get_GameOver()
         # logstr = "------------------ game result = "+str(self.tree.translatedResult())+" --------------"
         # MYLOGGER.debuglog(logstr)

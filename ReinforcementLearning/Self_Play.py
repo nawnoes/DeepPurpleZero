@@ -24,7 +24,7 @@ class Play:
 
         self.loadFenData= FL.FenLoad()
         self.gameInfo.load()
-        self.LIMITofCOUNT = 1
+        self.LIMITofCOUNT = 500
     def __del__(self):
         print("")
 
@@ -96,10 +96,6 @@ class Play:
 
         while not chessBoard.is_game_over():
             objgraph.show_most_common_types()
-
-
-            print(self.gameInfo.info)
-            print(type(self.gameInfo.info))
             if gameCount >self.LIMITofCOUNT:
                 break
             print("---------------")
@@ -152,8 +148,7 @@ class Play:
                 self.gameInfo.info['FormerWin']+=1
                 str = "LaterAi Lose, Self-Play Result: " + result
             else:
-                str = "LaterAi Lose, Self-Play Result: " + result
-
+                str = "LaterAi Draw, Self-Play Result: " + result
         self.gameInfo.info['CurrentGameCount']+=1
         self.gameInfo.info['GameCount']+=1
         print(str)
